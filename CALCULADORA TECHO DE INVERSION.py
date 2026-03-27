@@ -11,17 +11,16 @@ st.set_page_config(page_title="Auditoría Financiera | Jancarlo Inmobiliario", l
 st.markdown("""
     <style>
     .main { background-color: #0e1117; }
-    [data-testid="stMetricValue"] { color: #ffffff !important; font-weight: bold !important; }
-    [data-testid="stMetricLabel"] { color: #a1a1a1 !important; font-size: 1.1rem !important; }
+    [data-testid="stMetricValue"] { color: #ffffff !important; font-weight: bold !important; font-size: 2.1rem !important; }
+    [data-testid="stMetricLabel"] { color: #a1a1a1 !important; font-size: 1rem !important; }
     div[data-testid="stMetric"] {
         background-color: #1f2630;
         padding: 20px;
         border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         border: 1px solid #30363d;
     }
     .resultado-card { 
-        padding: 25px; border-radius: 15px; color: white !important; text-align: center; margin-bottom: 20px; min-height: 160px;
+        padding: 25px; border-radius: 15px; color: white !important; text-align: center; margin-bottom: 20px;
     }
     .verde { background: linear-gradient(135deg, #28a745, #1e7e34); }
     .azul { background: linear-gradient(135deg, #0e2647, #1b3a61); }
@@ -34,10 +33,12 @@ st.markdown("""
 def generar_pdf(datos_informe, escenarios):
     pdf = FPDF()
     pdf.add_page()
+    # Recuadro de Título
     pdf.set_draw_color(14, 38, 71); pdf.set_line_width(0.8); pdf.rect(10, 10, 190, 25)
     pdf.set_y(15); pdf.set_font("Arial", 'B', 16); pdf.set_text_color(14, 38, 71)
     pdf.cell(0, 10, "AUDITORIA FINANCIERA INMOBILIARIA", ln=True, align='C')
     pdf.ln(20)
+    # Cuerpo
     pdf.set_fill_color(14, 38, 71); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, " 1. DIAGNOSTICO FINANCIERO", ln=True, fill=True)
     pdf.ln(2); pdf.set_text_color(30, 30, 30); pdf.set_font("Arial", '', 11)
@@ -48,11 +49,12 @@ def generar_pdf(datos_informe, escenarios):
         pdf.set_font("Arial", 'B', 10); pdf.cell(70, 10, f" {esc['nombre']}", "B")
         pdf.cell(60, 10, f" S/ {esc['monto']:,}", "B", 0, 'C')
         pdf.cell(60, 10, f" {esc['desc']}", "B", 1, 'C')
-    pdf.ln(10); pdf.set_font("Arial", '', 9); pdf.write(5, "Este documento es una "); pdf.set_font("Arial", 'B', 9); pdf.write(5, "proyeccion tecnica referencial"); pdf.set_font("Arial", '', 9)
-    pdf.write(5, " basada en politicas bancarias generales.\nBonos actualizados a 2026.")
+    pdf.ln(10); pdf.set_font("Arial", '', 9); pdf.write(5, "Este documento es una ")
+    pdf.set_font("Arial", 'B', 9); pdf.write(5, "proyeccion técnica referencial"); pdf.set_font("Arial", '', 9)
+    pdf.write(5, " basada en politicas bancarias generales.\nDatos de Bonos MiVivienda actualizados a 2026.")
     return pdf.output(dest='S').encode('latin-1')
 
-# --- SIDEBAR ---
+# --- PANEL LATERAL (INPUTS) ---
 with st.sidebar:
     st.title("📊 Datos de Asesoría")
     with st.expander("💰 Ingresos y Capital", expanded=True):
@@ -60,7 +62,7 @@ with st.sidebar:
         ahorros = st.number_input("Ahorros Líquidos (S/)", min_value=0, value=15000)
         saldo_afp = st.number_input("Saldo Total en AFP (S/)", min_value=0, value=40000)
         disponible_afp = int(saldo_afp * 0.25)
-        st.info(f"✅ Disponible para inicial (25% AFP): S/ {disponible_afp:,}")
+        st.success(f"✅ Disponible para inicial (25% AFP): S/ {disponible_afp:,}")
 
     with st.expander("💳 Subgrupo 1: Tarjetas", expanded=True):
         linea_tc = st.number_input("Línea Total (S/)", value=10000)
@@ -71,7 +73,7 @@ with st.sidebar:
         p_vehicular = st.number_input("Cuota Préstamo Vehicular (S/)", value=0)
         p_otros = st.number_input("Otros Créditos (S/)", value=0)
     
-    with st.expander("🏦 Condiciones", expanded=False):
+    with st.expander("🏦 Condiciones Hipotecarias", expanded=False):
         tea = st.number_input("TEA (%)", value=9.5); plazo = st.number_input("Años", value=20)
 
     with st.expander("🎁 Bonos MiVivienda (2026)", expanded=True):
@@ -87,9 +89,9 @@ deudas = cuota_tc_sbs + p_personal + p_vehicular + p_otros
 pct_deuda = (deudas / ingreso * 100) if ingreso > 0 else 0
 cuota_disp = int(max(0, (ingreso * 0.40) - deudas))
 tem = (1 + tea/100)**(1/12) - 1
-prestamo = int(cuota_disp * ((1 - (1 + tem)**-(plazo * 12)) / tem))
+factor = (1 - (1 + tem)**-(plazo * 12)) / tem if tem > 0 else 0
+prestamo = int(cuota_disp * factor)
 inicial = ahorros + disponible_afp
-incremento = int(((max(0, (ingreso * 0.40) - ((linea_tc*0.5*0.05)+p_personal+p_vehicular+p_otros))) * ((1 - (1 + tem)**-(plazo * 12)) / tem)) - prestamo)
 
 escenarios = [
     {"nombre": "ECO-SOSTENIBLE", "monto": prestamo + inicial + m_verde, "clase": "verde", "desc": f"Bono: S/ {m_verde:,}"},
@@ -101,35 +103,60 @@ escenarios = [
 st.title("🎯 Auditoría financiera - Inversión")
 st.write("---")
 st.subheader("1. Salud Crediticia y Diagnóstico")
-col_g, col_m = st.columns([1.2, 2])
-with col_g:
-    fig = go.Figure(go.Indicator(mode="gauge+number", value=pct_deuda, title={'text': "Carga de Deuda Actual"},
+
+col_gauge, col_metrics = st.columns([1.2, 2])
+
+with col_gauge:
+    fig = go.Figure(go.Indicator(mode="gauge+number", value=pct_deuda, title={'text': "Carga de Deuda Actual", 'font': {'size': 20, 'color': 'white'}},
         number={'suffix': "%", 'font':{'color':'white'}},
         gauge={'axis': {'range': [None, 50]}, 'bar': {'color': "white"},
                'steps': [{'range': [0, 20], 'color': "#28a745"}, {'range': [20, 35], 'color': "#ffc107"}, {'range': [35, 50], 'color': "#dc3545"}]}))
-    fig.update_layout(height=350, paper_bgcolor='rgba(0,0,0,0)', font={'color': "white"})
+    fig.update_layout(height=380, paper_bgcolor='rgba(0,0,0,0)', font={'color': "white"})
     st.plotly_chart(fig, use_container_width=True)
     with st.expander("📋 Guía de Evaluación Bancaria"):
         st.markdown("<small>0-20%: Perfil Prime | 21-35%: Riesgo Medio | 36-40%: Límite Crítico</small>", unsafe_allow_html=True)
 
-with col_m:
-    st.write(""); st.columns(2)[0].metric("Cuota Disponible Real", f"S/ {cuota_disp:,}"); st.columns(2)[1].metric("Préstamo Hipotecario", f"S/ {prestamo:,}")
-    st.write("---"); st.metric("Inicial Total (Ahorros + AFP)", f"S/ {inicial:,}")
+with col_metrics:
+    # FILA 1: Alineación Horizontal de Cuota y Préstamo
+    met_col1, met_col2 = st.columns(2)
+    with met_col1:
+        st.metric("Cuota Disponible Real", f"S/ {cuota_disp:,}")
+    with met_col2:
+        st.metric("Préstamo Hipotecario", f"S/ {prestamo:,}")
+    
+    st.write("") # Espaciador vertical
+    
+    # FILA 2: Inicial Total
+    st.metric("Inicial Total (Ahorros + AFP)", f"S/ {inicial:,}")
+    
+    # FILA 3: Dato Bancario
     st.info("💡 **Dato Bancario:** Los bancos suelen limitar el total de tus deudas mensuales al 40% de tus ingresos netos.")
 
-st.write("---"); st.subheader("2. Tu Techo de Inversión por Proyecto")
+st.write("---")
+st.subheader("2. Tu Techo de Inversión por Proyecto")
 e1, e2, e3 = st.columns(3)
 for i, col in enumerate([e1, e2, e3]):
-    with col: st.markdown(f'<div class="resultado-card {escenarios[i]["clase"]}"><h3>{escenarios[i]["nombre"]}</h3><h1>S/ {escenarios[i]["monto"]:,}</h1><p>{escenarios[i]["desc"]}</p></div>', unsafe_allow_html=True)
+    with col:
+        st.markdown(f'<div class="resultado-card {escenarios[i]["clase"]}"><h3>{escenarios[i]["nombre"]}</h3><h1>S/ {escenarios[i]["monto"]:,}</h1><p>{escenarios[i]["desc"]}</p></div>', unsafe_allow_html=True)
 
-st.write("---"); st.subheader("🚀 Estrategia y Optimización")
+# SECCIÓN ESTRATEGIA RECONSTRUIDA
+st.write("---")
+st.subheader("🚀 Estrategia y Optimización")
 o1, o2 = st.columns(2)
 with o1:
-    if incremento > 0: st.success(f"📈 **Oportunidad:** Bajando tarjetas al 50%, tu presupuesto sube **S/ {incremento:,}**.")
-    else: st.info("Deuda saludable.")
-with o2: st.warning(f"📜 **Reserva Administrativa (3%):** S/ {int((prestamo+inicial)*0.03):,}")
+    cuota_sim = int(max(0, (ingreso * 0.40) - ((linea_tc*0.5*0.05)+p_personal+p_vehicular+p_otros)))
+    incremento = int((cuota_sim * factor) - prestamo)
+    if incremento > 0:
+        st.success(f"📈 **Oportunidad:** Bajando tus tarjetas al 50%, tu presupuesto de compra sube aproximadamente **S/ {incremento:,}**.")
+    else:
+        st.info("Tu nivel de deuda actual es óptimo para el sistema financiero.")
+with o2:
+    reserva = int((prestamo + inicial) * 0.03)
+    st.warning(f"📜 **Reserva Administrativa Sugerida (3%):** S/ {reserva:,} para gastos de alcabala, tasación y notariales.")
 
+# BOTÓN FINAL
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
-    pdf = generar_pdf({"Ingreso": f"S/ {ingreso:,}", "Deuda": f"{pct_deuda:.2f}%", "Cuota": f"S/ {cuota_disp:,}"}, escenarios)
-    st.download_button("📥 Descargar Reporte PDF", data=pdf, file_name="Reporte_Inversion.pdf")
+    resumen = {"Ingreso Mensual": f"S/ {ingreso:,}", "Carga Deuda": f"{pct_deuda:.2f}%", "Capacidad Cuota": f"S/ {cuota_disp:,}"}
+    pdf_out = generar_pdf(resumen, escenarios)
+    st.download_button("📥 Descargar Reporte PDF de Marca", data=pdf_out, file_name=f"Auditoria_{datetime.now().strftime('%Y%m%d')}.pdf")
