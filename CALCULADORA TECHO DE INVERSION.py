@@ -27,7 +27,6 @@ st.markdown("""
     .azul { background: linear-gradient(135deg, #0e2647, #1b3a61); }
     .gris { background: linear-gradient(135deg, #6c757d, #495057); }
     
-    /* Tarjetas de Optimización (Reducción 10% y Estilo Unificado) */
     .opt-card {
         padding: 18px; 
         border-radius: 10px; 
@@ -44,7 +43,7 @@ st.markdown("""
     .header-green { color: #34d399; }
     
     .opt-text { font-size: 0.85rem; color: #d1d5db; margin-bottom: 8px; line-height: 1.2; }
-    .opt-monto { color: white; margin-bottom: 0; font-size: 1.6rem; font-weight: bold; }
+    .opt-monto { color: white; margin-bottom: 0; font-size: 1.45rem; font-weight: bold; }
     
     #MainMenu, footer, header {visibility: hidden;}
     </style>
@@ -221,13 +220,19 @@ with opt_col2:
     """, unsafe_allow_html=True)
 
 with opt_col3:
-    # Optimización por Ahorro Extra
+    # Optimización por Ahorro Estratégico (Actualizada)
     ahorro_extra = 5000
+    nuevo_techo = escenarios[1]['monto'] + ahorro_extra
+    nueva_inicial_pct = ((inicial + ahorro_extra) / nuevo_techo) * 100 if nuevo_techo > 0 else 0
+    
     st.markdown(f"""
         <div class="opt-card opt-green">
-            <div class="opt-header header-green">💰 Proyección por Ahorro</div>
-            <div class="opt-text">Si consigues un ahorro extra de <b>S/ 5,000</b>, tu techo de inversión sube:</div>
-            <div class="opt-monto">+ S/ {ahorro_extra:,}</div>
+            <div class="opt-header header-green">💰 Ahorro Estratégico</div>
+            <div class="opt-text">Si ahorras <b>S/ 5,000</b> extra, tu inicial sube a:</div>
+            <div class="opt-monto">{nueva_inicial_pct:.2f}%</div>
+            <div style="font-size: 0.75rem; color: #a7f3d0; margin-top: 5px; line-height: 1.1;">
+                * Hace más viable el crédito y permite negociar una mejor tasa bancaria.
+            </div>
         </div>
     """, unsafe_allow_html=True)
 
