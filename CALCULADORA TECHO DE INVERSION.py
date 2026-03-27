@@ -2,12 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS UI (Jancarlo Inmobiliario Style)
-st.set_page_config(page_title="Auditoría 360° | Jancarlo Inmobiliario", layout="wide")
+# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS UI
+st.set_page_config(page_title="Auditoría Financiera | Jancarlo Inmobiliario", layout="wide")
 
 st.markdown("""
     <style>
-    /* Fondo general */
     .main { background-color: #f4f7f6; }
     
     /* ESTILO DE MÉTRICAS (Gris Oscuro sobre Blanco) */
@@ -45,42 +44,45 @@ st.markdown("""
     .azul { background: linear-gradient(135deg, #007bff, #0056b3); }
     .gris { background: linear-gradient(135deg, #6c757d, #495057); }
     
-    /* Títulos de sección */
     h1, h2, h3 { color: #1e1e1e; font-family: 'Segoe UI', sans-serif; }
     
-    /* Ajustes de Sidebar */
-    .css-1d391kg { background-color: #ffffff; }
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
 # --- PANEL LATERAL: ENTRADA DE DATOS ---
 with st.sidebar:
-    st.title("📊 Datos del Cliente")
-    st.write("Completa la información para el diagnóstico.")
+    st.title("📊 Datos de Asesoría")
     
-    with st.expander("💰 Ingresos y Ahorros", expanded=True):
+    with st.expander("💰 Ingresos y Capital", expanded=True):
         ingreso = st.number_input("Ingreso Neto Mensual (S/)", min_value=0.0, value=6000.0, step=100.0)
         ahorros = st.number_input("Ahorros Líquidos (S/)", min_value=0.0, value=15000.0)
+        # NUEVO INPUT: Saldo total de AFP para calcular el 25%
+        saldo_afp_total = st.number_input("Saldo Total en AFP (S/)", min_value=0.0, value=40000.0, help="Ingresa el fondo total acumulado.")
+        disponible_afp = saldo_afp_total * 0.25
+        st.caption(f"✅ Disponible para inicial (25%): S/ {disponible_afp:,.2f}")
     
     with st.expander("💳 Deudas (Cuotas Mes)", expanded=True):
         p_personal = st.number_input("Préstamos Personales", value=0.0)
         p_vehicular = st.number_input("Préstamo Vehicular", value=0.0)
-        tarjetas = st.number_input("Cuotas de Tarjeta", value=0.0, help="Solo cuotas fijas de compras pasadas.")
+        tarjetas = st.number_input("Cuotas de Tarjeta", value=0.0)
         otros = st.number_input("Otros Créditos", value=0.0)
 
-# --- LÓGICA DE CÁLCULO FINANCIERO ---
+# --- LÓGICA DE CÁLCULO ---
 capacidad_40 = ingreso * 0.40
 deudas_totales = p_personal + p_vehicular + tarjetas + otros
 cuota_disponible = max(0.0, capacidad_40 - deudas_totales)
 
-# Factor financiero MiVivienda (Aprox. TEA 9% - 20 años)
+# Factor financiero (TEA 9% - 20 años)
 prestamo_max = cuota_disponible * 111.14
-inicial_afp = ingreso * 0.25
-inicial_total = ahorros + inicial_afp
+# Inicial Total: Ahorros propios + el 25% de la AFP ingresada manualmente
+inicial_total = ahorros + disponible_afp
 
-# Definición de Escenarios (Monto + Identificadores)
-esc_verde = prestamo_max + inicial_total + 12800 # BBP + Bono Verde
-esc_tradicional = prestamo_max + inicial_total + 7300 # Solo BBP
+# Escenarios
+esc_verde = prestamo_max + inicial_total + 12800
+esc_tradicional = prestamo_max + inicial_total + 7300
 esc_directo = prestamo_max + inicial_total
 
 escenarios_data = [
@@ -90,7 +92,7 @@ escenarios_data = [
 ]
 
 # --- CUERPO PRINCIPAL ---
-st.title("🎯 Auditoría Inmobiliaria 360°")
+st.title("🎯 Auditoría financiera - Inversión")
 st.write("Análisis dinámico de capacidad de compra y salud crediticia.")
 st.write("---")
 
@@ -99,11 +101,11 @@ st.subheader("1. Indicadores de Calificación")
 c_met1, c_met2, c_met3 = st.columns(3)
 c_met1.metric("Cuota Mensual Máx.", f"S/ {cuota_disponible:,.2f}")
 c_met2.metric("Préstamo Hipotecario", f"S/ {prestamo_max:,.2f}")
-c_met3.metric("Inicial (Ahorros + AFP)", f"S/ {inicial_total:,.2f}")
+c_met3.metric("Inicial Total (S/)", f"S/ {inicial_total:,.2f}", help=f"Ahorros (S/ {ahorros:,.2f}) + 25% AFP (S/ {disponible_afp:,.2f})")
 
-# FASE 2: Techo de Inversión (Tarjetas)
+# FASE 2: Escenarios
 st.write("---")
-st.subheader("2. Tu Techo de Inversión según Proyecto")
+st.subheader("2. Tu Techo de Inversión por Proyecto")
 col1, col2, col3 = st.columns(3)
 cols = [col1, col2, col3]
 
@@ -117,10 +119,9 @@ for i, esc in enumerate(escenarios_data):
             </div>
             """, unsafe_allow_html=True)
 
-# FASE 3: Gráfico Sincronizado
+# FASE 3: Gráfico
 st.write("---")
-st.subheader("3. Comparativa Visual de Inversión")
-
+st.subheader("3. Visualización Comparativa de Inversión")
 df_grafico = pd.DataFrame(escenarios_data)
 fig = px.bar(
     df_grafico, x='nombre', y='monto', color='nombre',
@@ -131,34 +132,25 @@ fig.update_layout(showlegend=False, plot_bgcolor='rgba(0,0,0,0)', xaxis_title=No
 fig.update_traces(textposition='outside', textfont_size=14)
 st.plotly_chart(fig, use_container_width=True)
 
-# FASE 4: Rutas de Optimización (Cierre de Asesoría)
+# FASE 4: Rutas de Optimización
 st.write("---")
 st.subheader("🚀 Rutas de Optimización para tu Compra")
-st.info("Como asesor, estas son las estrategias que podemos ejecutar para mejorar tus números:")
 
 opt1, opt2 = st.columns(2)
 with opt1:
-    with st.expander("📉 Plan de Liberación de Capacidad", expanded=False):
+    with st.expander("📉 Plan de Liberación de Capacidad", expanded=True):
         st.write(f"Si liquidamos tus deudas de **S/ {deudas_totales:,.2f}**, tu techo de inversión podría subir drásticamente.")
         st.write("- **Meta:** Eliminar cuotas de tarjeta de corto plazo.")
         st.write("- **Impacto:** Subir el préstamo bancario en aprox. S/ 25,000.")
-    
-    with st.expander("📍 Estrategia Magdalena vs. San Isidro", expanded=False):
-        st.write("Comparamos el precio por m² para maximizar el área de tu futuro departamento.")
-        st.write("- **Magdalena:** Ideal para primera vivienda (m² competitivo).")
-        st.write("- **San Isidro:** Alta plusvalía y perfil de inversión.")
 
 with opt2:
-    with st.expander("🏦 Perfilamiento para Tasa Preferencial", expanded=False):
-        st.write("No todos los bancos evalúan igual. Te ayudamos a elegir la entidad con la menor TEA.")
-        st.write("- **Acción:** Revisión de Score Sentinel/Infocorp.")
-        st.write("- **Acción:** Preparación de sustento de ingresos (Ingenieros/Independientes).")
-    
-    with st.expander("📜 Gestión de Gastos de Cierre", expanded=False):
+    with st.expander("📜 Gestión de Gastos de Cierre", expanded=True):
         st.write("Calculamos el 3% adicional para que tu inicial sea real y sin sorpresas.")
         st.write("- **Detalle:** Alcabala, Gastos Notariales y Registrales.")
+        st.write("- **Nota:** Considerar este monto fuera de la cuota inicial declarada al banco.")
 
-# Botón final decorativo
-if st.button("✅ Finalizar Auditoría y Generar PDF"):
+# Final
+st.write("---")
+if st.button("✅ Finalizar Auditoría"):
     st.balloons()
-    st.success("Auditoría completada satisfactoriamente para Jancarlo Inmobiliario.")
+    st.success("Auditoría completada satisfactoriamente.")
