@@ -12,7 +12,6 @@ st.markdown("""
     <style>
     .main { background-color: #f4f7f6; }
     [data-testid="stMetricValue"] { color: #1e1e1e !important; font-weight: bold !important; }
-    [data-testid="stMetricLabel"] { color: #4a4a4a !important; font-size: 1.1rem !important; }
     div[data-testid="stMetric"] {
         background-color: #ffffff;
         padding: 20px;
@@ -21,110 +20,120 @@ st.markdown("""
         border: 1px solid #e0e0e0;
     }
     .resultado-card { 
-        padding: 25px; 
-        border-radius: 15px; 
-        color: white !important; 
-        text-align: center;
-        margin-bottom: 20px;
-        min-height: 160px;
+        padding: 25px; border-radius: 15px; color: white !important; text-align: center; margin-bottom: 20px;
     }
-    .resultado-card h3, .resultado-card h1, .resultado-card p { color: white !important; }
     .verde { background: linear-gradient(135deg, #28a745, #1e7e34); }
-    .azul { background: linear-gradient(135deg, #007bff, #0056b3); }
+    .azul { background: linear-gradient(135deg, #0e2647, #1b3a61); } /* Color Marca */
     .gris { background: linear-gradient(135deg, #6c757d, #495057); }
-    
-    #MainMenu, footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNCIÓN GENERAR PDF PROFESIONAL ---
+# --- FUNCIÓN GENERAR PDF CON DISEÑO DE MARCA ---
 def generar_pdf(datos_informe, escenarios):
     pdf = FPDF()
     pdf.add_page()
     
-    # Encabezado
+    # 1. RECUADRO DE TÍTULO (Grande y Elegante)
+    pdf.set_draw_color(14, 38, 71) # Azul Marca #0e2647
+    pdf.set_line_width(0.8)
+    pdf.rect(10, 10, 190, 25) # x, y, ancho, alto
+    
+    pdf.set_y(15)
     pdf.set_font("Arial", 'B', 16)
-    pdf.set_text_color(30, 30, 30)
+    pdf.set_text_color(14, 38, 71)
     pdf.cell(0, 10, "AUDITORIA FINANCIERA INMOBILIARIA", ln=True, align='C')
-    pdf.set_font("Arial", '', 10)
-    pdf.cell(0, 5, f"Fecha de emision: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True, align='C')
-    pdf.ln(10)
+    pdf.set_font("Arial", '', 9)
+    pdf.cell(0, 5, f"REPORTE TECNICO GENERADO EL {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True, align='C')
     
-    # Sección 1: Perfil Financiero
-    pdf.set_fill_color(240, 240, 240)
+    pdf.ln(15)
+    
+    # 2. RESUMEN PERFIL (Celdas con borde Azul Marca)
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, " 1. RESUMEN DEL PERFIL FINANCIERO", ln=True, fill=True)
-    pdf.set_font("Arial", '', 11)
-    pdf.ln(2)
-    pdf.cell(90, 8, f"Ingreso Neto Mensual:", 0)
-    pdf.cell(0, 8, f"S/ {datos_informe['ingreso']:,}", 1, ln=True)
-    pdf.cell(90, 8, f"Carga de Deuda Actual (SBS):", 0)
-    pdf.cell(0, 8, f"{datos_informe['deuda_pct']:.2f}%", 1, ln=True)
-    pdf.cell(90, 8, f"Cuota Disponible para Hipoteca:", 0)
-    pdf.cell(0, 8, f"S/ {datos_informe['cuota_disp']:,}", 1, ln=True)
-    pdf.cell(90, 8, f"Prestamo Hipotecario Estimado:", 0)
-    pdf.cell(0, 8, f"S/ {datos_informe['prestamo_max']:,}", 1, ln=True)
-    pdf.ln(10)
-    
-    # Sección 2: Techo de Inversión
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, " 2. CAPACIDAD DE INVERSION (TECHO MAXIMO)", ln=True, fill=True)
-    pdf.ln(4)
-    
-    # Tabla de Escenarios
-    pdf.set_font("Arial", 'B', 10)
-    pdf.set_fill_color(0, 123, 255) # Azul
+    pdf.set_fill_color(14, 38, 71)
     pdf.set_text_color(255, 255, 255)
-    pdf.cell(70, 10, " ESCENARIO", 1, 0, 'C', True)
-    pdf.cell(60, 10, " TOTAL INVERSION", 1, 0, 'C', True)
-    pdf.cell(60, 10, " DETALLE", 1, 1, 'C', True)
+    pdf.cell(0, 10, " 1. DIAGNOSTICO DE SALUD CREDITICIA", ln=True, fill=True)
     
-    pdf.set_text_color(0, 0, 0)
+    pdf.ln(2)
+    pdf.set_text_color(30, 30, 30)
+    pdf.set_font("Arial", '', 11)
+    
+    # Filas de datos
+    pdf.cell(95, 10, f" Ingreso Neto Mensual:", "B")
+    pdf.cell(0, 10, f"S/ {datos_informe['ingreso']:,}", "B", ln=True, align='R')
+    pdf.cell(95, 10, f" Carga de Deuda SBS:", "B")
+    pdf.cell(0, 10, f"{datos_informe['deuda_pct']:.2f}%", "B", ln=True, align='R')
+    pdf.cell(95, 10, f" Capacidad de Cuota Hipotecaria:", "B")
+    pdf.cell(0, 10, f"S/ {datos_informe['cuota_disp']:,}", "B", ln=True, align='R')
+    
+    pdf.ln(10)
+    
+    # 3. TABLA DE ESCENARIOS (Estilo Moderno)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.set_fill_color(14, 38, 71)
+    pdf.set_text_color(255, 255, 255)
+    pdf.cell(0, 10, " 2. TECHOS DE INVERSION Y BONOS", ln=True, fill=True)
+    
+    pdf.ln(4)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_fill_color(215, 179, 93) # Amarillo Marca #d7b35d
+    pdf.cell(70, 10, " ESCENARIO", 0, 0, 'L', True)
+    pdf.cell(60, 10, " INVERSION TOTAL", 0, 0, 'C', True)
+    pdf.cell(60, 10, " DETALLE BONOS", 0, 1, 'C', True)
+    
+    pdf.set_text_color(30, 30, 30)
     pdf.set_font("Arial", '', 10)
     for esc in escenarios:
-        pdf.cell(70, 10, f" {esc['nombre']}", 1)
-        pdf.cell(60, 10, f" S/ {esc['monto']:,}", 1, 0, 'C')
-        pdf.cell(60, 10, f" {esc['desc']}", 1, 1, 'C')
+        pdf.cell(70, 10, f" {esc['nombre']}", "B")
+        pdf.cell(60, 10, f"S/ {esc['monto']:,}", "B", 0, 'C')
+        pdf.cell(60, 10, f"{esc['desc']}", "B", 1, 'C')
     
     pdf.ln(10)
     
-    # Sección 3: Estrategia
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, " 3. NOTAS Y ESTRATEGIA DE MEJORA", ln=True, fill=True)
-    pdf.set_font("Arial", '', 10)
+    # 4. NOTA LEGAL Y ESTRATEGIA
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_text_color(14, 38, 71)
+    pdf.cell(0, 8, "NOTAS ESTRATEGICAS:", ln=True)
+    pdf.set_font("Arial", '', 9)
+    pdf.set_text_color(50, 50, 50)
+    
+    # Texto solicitado con "Referencial" resaltado (FPDF requiere separar para negritas)
+    pdf.write(5, "Este documento es una ")
+    pdf.set_font("Arial", 'B', 9)
+    pdf.write(5, "proyeccion tecnica referencial")
+    pdf.set_font("Arial", '', 9)
+    pdf.write(5, " basada en politicas bancarias generales para creditos hipotecarios.\n")
     pdf.ln(2)
-    pdf.multi_cell(0, 8, f"Reserva estimada para gastos de cierre (3%): S/ {int(escenarios[1]['monto']*0.03):,}\n"
-                         f"Incremento potencial de prestamo si se reduce deuda: S/ {datos_informe['incremento']:,}\n"
-                         "Este documento es una proyeccion tecnica basada en politicas bancarias generales.")
+    pdf.write(5, "Informacion de Bonos MiVivienda y Bono Verde actualizada al año 2026.\n")
+    
+    # 5. PIE DE PÁGINA MINIMALISTA (Barra Amarilla)
+    pdf.set_y(-25)
+    pdf.set_fill_color(215, 179, 93) # Amarillo Marca
+    pdf.rect(10, 275, 190, 1, 'F') # Línea decorativa
+    pdf.set_font("Arial", 'I', 8)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 10, "Jancarlo Inmobiliario - Consultoria en Inversion y Real Estate", 0, 0, 'C')
 
     return pdf.output(dest='S').encode('latin-1')
 
-# --- PANEL LATERAL: INPUTS ---
+# --- LÓGICA DE DATOS (Basada en tu versión preferida) ---
 with st.sidebar:
     st.title("📊 Datos de Asesoría")
-    
     with st.expander("💰 Ingresos y Capital", expanded=True):
         ingreso = st.number_input("Ingreso Neto Mensual (S/)", min_value=0, value=6000, step=100)
         ahorros = st.number_input("Ahorros Líquidos (S/)", min_value=0, value=15000)
         saldo_afp = st.number_input("Saldo Total en AFP (S/)", min_value=0, value=40000)
         disponible_afp = int(saldo_afp * 0.25)
-        st.info(f"✅ Disponible para inicial (25% AFP): S/ {disponible_afp:,}")
 
     with st.expander("💳 Subgrupo 1: Tarjetas de Crédito", expanded=True):
-        linea_tc = st.number_input("Línea Total de Tarjetas (S/)", min_value=0, value=10000, step=500)
+        linea_tc = st.number_input("Línea Total de Tarjetas (S/)", min_value=0, value=10000)
         cuota_tc_sbs = int(linea_tc * 0.05)
-        st.warning(f"⚠️ Cuota teórica SBS (5%): S/ {cuota_tc_sbs:,}")
 
     with st.expander("🏦 Subgrupo 2: Otras Cuotas Fijas", expanded=True):
         p_personal = st.number_input("Cuota Préstamo Personal (S/)", min_value=0, value=0)
         p_vehicular = st.number_input("Cuota Préstamo Vehicular (S/)", min_value=0, value=0)
         p_otros = st.number_input("Otros Créditos (S/)", min_value=0, value=0)
-        
-    with st.expander("🏦 Condiciones del Crédito", expanded=False):
-        tea = st.number_input("Tasa Efectiva Anual - TEA (%)", min_value=1.0, max_value=20.0, value=9.5, step=0.1)
-        plazo_anios = st.number_input("Plazo del Préstamo (Años)", min_value=5, max_value=30, value=20, step=1)
-        
-    with st.expander("🎁 Bonos MiVivienda (Tabla 2026)", expanded=True):
+
+    with st.expander("🎁 Bonos MiVivienda (2026)", expanded=True):
         datos_bonos = {
             "Rango 1": {"min": 68800, "max": 98100, "bbp": 27400, "verde": 33700},
             "Rango 2": {"min": 98100, "max": 146900, "bbp": 22800, "verde": 29100},
@@ -132,141 +141,53 @@ with st.sidebar:
             "Rango 4": {"min": 244600, "max": 362100, "bbp": 7800, "verde": 14100},
             "Rango 5": {"min": 362100, "max": 488800, "bbp": 0, "verde": 0}
         }
-        seleccion_rango = st.selectbox("Seleccionar Rango de Valor", list(datos_bonos.keys()), index=3)
-        rango_info = datos_bonos[seleccion_rango]
-        st.success(f"🏠 Valor Vivienda: S/ {rango_info['min']:,} - S/ {rango_info['max']:,}")
-        
-        integrador = st.checkbox("¿Aplica Bono Integrador? (+ S/ 3,600)", value=False)
-        extra_integrador = 3600 if integrador else 0
-        
-        monto_bbp = rango_info['bbp'] + extra_integrador if rango_info['bbp'] > 0 else 0
-        monto_bbp_verde = rango_info['verde'] + extra_integrador if rango_info['verde'] > 0 else 0
+        sel_rango = st.selectbox("Rango", list(datos_bonos.keys()), index=3)
+        integrador = st.checkbox("Bono Integrador (+3,600)", value=False)
+        monto_bbp = datos_bonos[sel_rango]['bbp'] + (3600 if integrador else 0)
+        monto_bbp_verde = datos_bonos[sel_rango]['verde'] + (3600 if integrador else 0)
 
-# --- LÓGICA DE CÁLCULO ---
-deudas_totales = cuota_tc_sbs + p_personal + p_vehicular + p_otros
-pct_endeudamiento = (deudas_totales / ingreso * 100) if ingreso > 0 else 0
-capacidad_40 = ingreso * 0.40
-cuota_disponible = int(max(0, capacidad_40 - deudas_totales))
+# --- CÁLCULOS ---
+deudas = cuota_tc_sbs + p_personal + p_vehicular + p_otros
+pct_deuda = (deudas / ingreso * 100) if ingreso > 0 else 0
+cuota_disp = int(max(0, (ingreso * 0.40) - deudas))
+prestamo = int(cuota_disp * 110.3) # Estimado rápido
+inicial = ahorros + disponible_afp
 
-tem = (1 + tea/100)**(1/12) - 1
-n_meses = plazo_anios * 12
-factor = (1 - (1 + tem)**-n_meses) / tem if tem > 0 else 0
-prestamo_max = int(cuota_disponible * factor)
-
-cuota_tc_sim = int((linea_tc * 0.5) * 0.05)
-cuota_disp_sim = int(max(0, capacidad_40 - (cuota_tc_sim + p_personal + p_vehicular + p_otros)))
-prestamo_max_simulado = int(cuota_disp_sim * factor)
-incremento_prestamo = prestamo_max_simulado - prestamo_max
-inicial_total = ahorros + disponible_afp
-
-esc_verde = int(prestamo_max + inicial_total + monto_bbp_verde)
-esc_tradicional = int(prestamo_max + inicial_total + monto_bbp)
-esc_directo = int(prestamo_max + inicial_total)
-
-escenarios_data = [
-    {"nombre": "ECO-SOSTENIBLE", "monto": esc_verde, "clase": "verde", "color_hex": "#28a745", "desc": f"Bono: S/ {monto_bbp_verde:,}"},
-    {"nombre": "MIVIVIENDA TRADICIONAL", "monto": esc_tradicional, "clase": "azul", "color_hex": "#007bff", "desc": f"Bono: S/ {monto_bbp:,}"},
-    {"nombre": "SIN BONOS", "monto": esc_directo, "clase": "gris", "color_hex": "#6c757d", "desc": "Solo Rec. Propios"}
+escenarios_pdf = [
+    {"nombre": "ECO-SOSTENIBLE", "monto": prestamo + inicial + monto_bbp_verde, "desc": f"Bonos: S/ {monto_bbp_verde:,}"},
+    {"nombre": "MIVIVIENDA TRADICIONAL", "monto": prestamo + inicial + monto_bbp, "desc": f"Bono: S/ {monto_bbp:,}"},
+    {"nombre": "SIN BONOS", "monto": prestamo + inicial, "desc": "Solo Fondos Propios"}
 ]
 
-# --- CUERPO PRINCIPAL ---
+# --- UI PRINCIPAL (Manteniendo tu estructura) ---
 st.title("🎯 Auditoría financiera - Inversión")
-st.write(f"Diagnóstico técnico bajo normativa SBS y MiVivienda 2026.")
 st.write("---")
 
-# FASE 1: Semáforo y Métricas
-st.subheader("1. Salud Crediticia y Diagnóstico")
-col_gauge, col_mets = st.columns([1.2, 2])
+col1, col2 = st.columns([1.2, 2])
+with col1:
+    fig = go.Figure(go.Indicator(mode="gauge+number", value=pct_deuda, number={'suffix': "%"}))
+    st.plotly_chart(fig, use_container_width=True)
 
-with col_gauge:
-    fig_gauge = go.Figure(go.Indicator(
-        mode = "gauge+number",
-        value = pct_endeudamiento,
-        number = {'suffix': "%", 'font': {'size': 26}},
-        title = {'text': "Carga de Deuda Actual", 'font': {'size': 18}},
-        gauge = {
-            'axis': {'range': [None, 50], 'tickwidth': 1},
-            'bar': {'color': "#1e1e1e"},
-            'steps': [
-                {'range': [0, 20], 'color': "#28a745"},
-                {'range': [20, 35], 'color': "#ffc107"},
-                {'range': [35, 50], 'color': "#dc3545"}],
-            'threshold': {
-                'line': {'color': "red", 'width': 4},
-                'thickness': 0.75,
-                'value': 40}
-        }))
-    fig_gauge.update_layout(height=280, margin=dict(l=30, r=30, t=50, b=10))
-    st.plotly_chart(fig_gauge, use_container_width=True)
-    
-    with st.expander("📋 Guía de Evaluación Bancaria", expanded=False):
-        st.markdown("""
-        <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
-            <tr style="border-bottom: 1px solid #f5f5f5;">
-                <td style="color: #28a745; font-weight: bold; padding: 8px 0;">0% - 20%</td>
-                <td style="color: #ffffff; padding: 8px 0;"><b>Perfil Prime:</b> Calificación inmediata y mejor tasa.</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #f5f5f5;">
-                <td style="color: #ffb100; font-weight: bold; padding: 8px 0;">21% - 35%</td>
-                <td style="color: #ffffff; padding: 8px 0;"><b>Riesgo Medio:</b> Aprobación sujeta a sustento técnico.</td>
-            </tr>
-            <tr>
-                <td style="color: #dc3545; font-weight: bold; padding: 8px 0;">36% - 40%</td>
-                <td style="color: #ffffff; padding: 8px 0;"><b>Límite Crítico:</b> Requiere liberar carga financiera.</td>
-            </tr>
-        </table>
-        """, unsafe_allow_html=True)
+with col2:
+    st.metric("Préstamo Hipotecario Estimado", f"S/ {prestamo:,}")
+    st.metric("Inicial Total", f"S/ {inicial:,}")
 
-with col_mets:
-    st.write("")
-    m1, m2 = st.columns(2)
-    m1.metric("Cuota Disponible Bruta", f"S/ {cuota_disponible:,}")
-    m2.metric("Préstamo Hipotecario Estimado", f"S/ {prestamo_max:,}")
-    st.write("---")
-    st.metric("Inicial Total (Ahorros + AFP)", f"S/ {inicial_total:,}")
-    st.write("---")
-    st.info("💡 **Dato Bancario:** Los bancos suelen limitar el total de tus deudas mensuales al 40% de tus ingresos netos.")
-
-# FASE 2: Escenarios
-st.write("---")
-st.subheader("2. Tu Techo de Inversión por Proyecto")
-c1, c2, c3 = st.columns(3)
-cols = [c1, c2, c3]
-for i, esc in enumerate(escenarios_data):
-    with cols[i]:
-        st.markdown(f'<div class="resultado-card {esc["clase"]}"><h3>{esc["nombre"]}</h3><h1>S/ {esc["monto"]:,}</h1><p>{esc["desc"]}</p></div>', unsafe_allow_html=True)
-
-# FASE 3: Gráfico
-st.write("---")
-df_grafico = pd.DataFrame(escenarios_data)
-fig_bar = px.bar(df_grafico, x='nombre', y='monto', color='nombre',
-             color_discrete_map={"ECO-SOSTENIBLE": "#28a745", "MIVIVIENDA TRADICIONAL": "#007bff", "SIN BONOS": "#6c757d"},
-             text_auto=True)
-fig_bar.update_layout(showlegend=False, plot_bgcolor='rgba(0,0,0,0)', yaxis_title="S/ Totales", xaxis_title=None)
-fig_bar.update_traces(texttemplate='S/ %{y:,.0f}', textposition='outside')
-st.plotly_chart(fig_bar, use_container_width=True)
-
-# FASE 4 y 5: Finalización y Exportación
 st.write("---")
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
     
-    # Preparar datos para el informe
     datos_pdf = {
         'ingreso': ingreso,
-        'deuda_pct': pct_endeudamiento,
-        'cuota_disp': cuota_disponible,
-        'prestamo_max': prestamo_max,
-        'incremento': incremento_prestamo
+        'deuda_pct': pct_deuda,
+        'cuota_disp': cuota_disp,
+        'prestamo_max': prestamo
     }
     
-    # Generar el archivo
-    pdf_bytes = generar_pdf(datos_pdf, escenarios_data)
+    pdf_bytes = generar_pdf(datos_pdf, escenarios_pdf)
     
-    st.success("Auditoria finalizada. Ya puedes descargar el reporte oficial.")
     st.download_button(
-        label="📥 Descargar Reporte PDF",
+        label="📥 Descargar Reporte Oficial (PDF)",
         data=pdf_bytes,
-        file_name=f"Auditoria_Inmobiliaria_{datetime.now().strftime('%Y%m%d')}.pdf",
+        file_name=f"Reporte_Inversion_{datetime.now().strftime('%Y%m%d')}.pdf",
         mime="application/pdf"
     )
