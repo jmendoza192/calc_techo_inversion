@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from fpdf import FPDF
 from datetime import datetime
 
-# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS UI
+# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS UI (NO MOVER)
 st.set_page_config(page_title="Auditoría Financiera | Jancarlo Inmobiliario", layout="wide")
 
 st.markdown("""
@@ -49,27 +49,83 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNCIÓN PDF ---
-def generar_pdf(datos_informe, escenarios):
+# --- 2. FUNCIÓN DE EXPORTACIÓN PDF (ACTUALIZADA) ---
+def generar_pdf(datos_informe, escenarios, seleccion_bono):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_draw_color(14, 38, 71); pdf.set_line_width(0.8); pdf.rect(10, 10, 190, 25)
-    pdf.set_y(15); pdf.set_font("Arial", 'B', 16); pdf.set_text_color(14, 38, 71)
+    
+    # Encabezado y Título
+    pdf.set_draw_color(14, 38, 71)
+    pdf.set_line_width(0.8)
+    pdf.rect(10, 10, 190, 30)
+    
+    pdf.set_y(15)
+    pdf.set_font("Arial", 'B', 16)
+    pdf.set_text_color(14, 38, 71)
     pdf.cell(0, 10, "AUDITORIA FINANCIERA INMOBILIARIA", ln=True, align='C')
-    pdf.ln(20)
-    pdf.set_fill_color(14, 38, 71); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", 'B', 12)
+    
+    # Fecha y Hora
+    ahora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    pdf.set_font("Arial", '', 9)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 5, f"Fecha y hora de realizacion: {ahora}", ln=True, align='C')
+    
+    pdf.ln(15)
+    
+    # Sección 1: Diagnóstico
+    pdf.set_fill_color(14, 38, 71)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, " 1. DIAGNOSTICO FINANCIERO", ln=True, fill=True)
-    pdf.ln(2); pdf.set_text_color(30, 30, 30); pdf.set_font("Arial", '', 11)
+    
+    pdf.ln(2)
+    pdf.set_text_color(30, 30, 30)
+    pdf.set_font("Arial", '', 11)
     for k, v in datos_informe.items():
-        pdf.cell(95, 10, f" {k}:", "B"); pdf.cell(0, 10, f"{v}", "B", ln=True, align='R')
-    pdf.ln(10); pdf.set_fill_color(215, 179, 93); pdf.cell(0, 10, " 2. TECHOS DE INVERSION", ln=True, fill=True)
+        pdf.cell(95, 10, f" {k}:", "B")
+        pdf.cell(0, 10, f"{v}", "B", ln=True, align='R')
+    
+    pdf.ln(10)
+    
+    # Sección 2: Techos (Negrita)
+    pdf.set_fill_color(215, 179, 93)
+    pdf.set_text_color(14, 38, 71)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 10, " 2. TECHOS DE INVERSION", ln=True, fill=True)
+    
+    pdf.set_font("Arial", 'B', 10)
     for esc in escenarios:
-        pdf.set_font("Arial", 'B', 10); pdf.cell(70, 10, f" {esc['nombre']}", "B")
+        pdf.cell(70, 10, f" {esc['nombre']}", "B")
         pdf.cell(60, 10, f" S/ {esc['monto']:,}", "B", 0, 'C')
         pdf.cell(60, 10, f" {esc['desc']}", "B", 1, 'C')
+    
+    pdf.ln(10)
+    
+    # Notas Referenciales
+    pdf.set_font("Arial", 'I', 9)
+    pdf.set_text_color(80, 80, 80)
+    texto_referencial = (
+        "NOTA: Este reporte es estrictamente REFERENCIAL y no representa un compromiso legal de desembolso. "
+        f"Los montos calculados consideran los Bonos MiVivienda actualizados al 2026 para el rango {seleccion_bono}. "
+        "La aprobacion final esta sujeta a la evaluacion de riesgos de la entidad bancaria y la tasacion del proyecto."
+    )
+    pdf.multi_cell(0, 5, texto_referencial)
+    
+    pdf.ln(25)
+    
+    # Firma y Redes
+    pdf.set_draw_color(215, 179, 93)
+    pdf.line(120, pdf.get_y(), 200, pdf.get_y())
+    pdf.ln(2)
+    pdf.set_font("Arial", 'B', 11)
+    pdf.set_text_color(14, 38, 71)
+    pdf.cell(0, 6, "Ing. Jancarlo Mendoza - Asesoria Inmobiliaria", ln=True, align='R')
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 6, "Redes Sociales: @jancarlo.inmobiliario", ln=True, align='R')
+    
     return pdf.output(dest='S').encode('latin-1')
 
-# --- PANEL LATERAL ---
+# --- 3. PANEL LATERAL (INPUTS) ---
 with st.sidebar:
     st.title("📊 Datos de Asesoría")
     
@@ -109,7 +165,7 @@ with st.sidebar:
         m_bbp = datos_bonos[sel]['b'] + extra if datos_bonos[sel]['b'] > 0 else 0
         m_verde = datos_bonos[sel]['v'] + extra if datos_bonos[sel]['v'] > 0 else 0
 
-# --- LÓGICA FINANCIERA ---
+# --- 4. LÓGICA DE CÁLCULO ---
 deudas = cuota_tc_sbs + p_personal + p_vehicular + p_otros
 pct_deuda = (deudas / ingreso * 100) if ingreso > 0 else 0
 cuota_disp = int(max(0, (ingreso * 0.40) - deudas))
@@ -124,7 +180,7 @@ escenarios = [
     {"nombre": "SIN BONOS", "monto": prestamo + inicial, "clase": "gris", "desc": "Solo Rec. Propios"}
 ]
 
-# --- UI CUERPO ---
+# --- 5. INTERFAZ WEB (CUERPO) ---
 st.title("🎯 Auditoría financiera - Inversión")
 st.write("---")
 st.subheader("1. Salud Crediticia y Diagnóstico")
@@ -144,7 +200,6 @@ with col_metrics:
     met_c2.metric("Préstamo Hipotecario", f"S/ {prestamo:,}")
     st.write("")
     st.metric("Inicial Total (Ahorros + AFP)", f"S/ {inicial:,}")
-    st.info("💡 **Dato Bancario:** Los bancos limitan tus deudas mensuales al 40% de tus ingresos netos.")
 
 st.write("---")
 st.subheader("2. Tu Techo de Inversión por Proyecto")
@@ -164,80 +219,56 @@ for i, col in enumerate([e1, e2, e3]):
             </div>
         """, unsafe_allow_html=True)
 
-# --- 3. VALIDACIÓN DE POLÍTICAS ---
 st.write("")
 st.subheader("🚀 Validación de Políticas e Inicial Mínima")
 v1, v2, v3 = st.columns(3)
-
 porcentaje_ref = (inicial / escenarios[1]['monto']) if escenarios[1]['monto'] > 0 else 0
 
 with v1:
-    if porcentaje_ref >= 0.075:
-        st.success(f"✅ **Fondo Mivivienda:** Su inicial de S/ {inicial:,} cumple con el 7.5% mínimo legal.")
-    else:
-        st.error(f"⚠️ **Fondo Mivivienda:** Su inicial ({porcentaje_ref*100:.1f}%) es menor al 7.5% legal.")
+    if porcentaje_ref >= 0.075: st.success(f"✅ **Fondo Mivivienda:** Inicial cumple con el 7.5% mínimo legal.")
+    else: st.error(f"⚠️ **Fondo Mivivienda:** Inicial ({porcentaje_ref*100:.1f}%) es menor al 7.5% legal.")
 
 with v2:
-    if porcentaje_ref >= 0.10:
-        st.success("🏦 **Perfil Bancario:** Su inicial supera el 10%, facilitando la aprobación comercial.")
-    else:
-        st.warning(f"🏦 **Perfil Bancario:** Inicial de {porcentaje_ref*100:.1f}%. El banco podría pedir llegar al 10%.")
+    if porcentaje_ref >= 0.10: st.success("🏦 **Perfil Bancario:** Inicial supera el 10%, facilita aprobación.")
+    else: st.warning(f"🏦 **Perfil Bancario:** El banco podría pedir llegar al 10% mínimo.")
 
 with v3:
     reserva = int((prestamo + inicial) * 0.03)
-    st.warning(f"📜 **Reserva Administrativa (3%):** Necesitarás **S/ {reserva:,}** para gastos de notaría y registros.")
+    st.warning(f"📜 **Reserva (3%):** S/ {reserva:,} para gastos notariales y registrales.")
 
-# --- 4. ESTRATEGIAS DE OPTIMIZACIÓN ---
 st.write("---")
 st.subheader("💡 Estrategias de Optimización")
 opt_col1, opt_col2, opt_col3 = st.columns(3)
 
 with opt_col1:
-    # Optimización por Deuda
     cuota_sim_deuda = int(max(0, (ingreso * 0.40) - ((linea_tc*0.5*0.05)+p_personal+p_vehicular+p_otros)))
     inc_deuda = int((cuota_sim_deuda * factor) - prestamo)
     monto_opt1 = inc_deuda if inc_deuda > 0 else 0
-    st.markdown(f"""
-        <div class="opt-card opt-blue">
-            <div class="opt-header header-blue">📈 Proyección por Deuda</div>
-            <div class="opt-text">Bajando tus tarjetas al 50%, tu techo de inversión sube:</div>
-            <div class="opt-monto">+ S/ {monto_opt1:,}</div>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div class="opt-card opt-blue"><div class="opt-header header-blue">📈 Proyección por Deuda</div><div class="opt-text">Bajando tus tarjetas al 50%, tu techo sube:</div><div class="opt-monto">+ S/ {monto_opt1:,}</div></div>', unsafe_allow_html=True)
 
 with opt_col2:
-    # Optimización por Ingresos
     ingreso_proy = ingreso + 500
     cuota_proy = int(max(0, (ingreso_proy * 0.40) - deudas))
     prestamo_proy = int(cuota_proy * factor)
     inc_ingreso = prestamo_proy - prestamo
-    st.markdown(f"""
-        <div class="opt-card opt-blue">
-            <div class="opt-header header-blue">🚀 Proyección por Ingresos</div>
-            <div class="opt-text">Si tus ingresos aumentan en <b>S/ 500</b>, tu techo de inversión sube:</div>
-            <div class="opt-monto">+ S/ {inc_ingreso:,}</div>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div class="opt-card opt-blue"><div class="opt-header header-blue">🚀 Proyección por Ingresos</div><div class="opt-text">Si tus ingresos aumentan en <b>S/ 500</b>, tu techo sube:</div><div class="opt-monto">+ S/ {inc_ingreso:,}</div></div>', unsafe_allow_html=True)
 
 with opt_col3:
-    # Optimización por Ahorro Estratégico (Actualizada)
     ahorro_extra = 5000
     nuevo_techo = escenarios[1]['monto'] + ahorro_extra
     nueva_inicial_pct = ((inicial + ahorro_extra) / nuevo_techo) * 100 if nuevo_techo > 0 else 0
-    
-    st.markdown(f"""
-        <div class="opt-card opt-green">
-            <div class="opt-header header-green">💰 Ahorro Estratégico</div>
-            <div class="opt-text">Si ahorras <b>S/ 5,000</b> extra, tu inicial sube a:</div>
-            <div class="opt-monto">{nueva_inicial_pct:.2f}%</div>
-            <div style="font-size: 0.75rem; color: #a7f3d0; margin-top: 5px; line-height: 1.1;">
-                * Hace más viable el crédito y permite negociar una mejor tasa bancaria.
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div class="opt-card opt-green"><div class="opt-header header-green">💰 Ahorro Estratégico</div><div class="opt-text">Si ahorras <b>S/ 5,000</b> extra, tu inicial sube a:</div><div class="opt-monto">{nueva_inicial_pct:.2f}%</div><div style="font-size: 0.75rem; color: #a7f3d0; margin-top: 5px; line-height: 1.1;">* Mejora viabilidad y negociación de tasa.</div></div>', unsafe_allow_html=True)
 
 st.write("")
+# --- BOTÓN FINAL CON LÓGICA DE PDF ---
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
-    pdf = generar_pdf({"Ingreso": f"S/ {ingreso:,}", "Deuda": f"{pct_deuda:.2f}%", "Cuota": f"S/ {cuota_disp:,}"}, escenarios)
-    st.download_button("📥 Descargar Reporte PDF", data=pdf, file_name="Reporte_Inversion.pdf")
+    datos_pdf = {
+        "Ingreso Mensual Neto": f"S/ {ingreso:,}",
+        "Carga de Deuda SBS": f"{pct_deuda:.2f}%",
+        "Cuota Disponible Hipotecaria": f"S/ {cuota_disp:,}",
+        "Capital para Inicial": f"S/ {inicial:,}",
+        "TEA Referencial": f"{tea}%"
+    }
+    pdf_bytes = generar_pdf(datos_pdf, escenarios, sel)
+    st.download_button("📥 Descargar Reporte PDF Profesional", data=pdf_bytes, file_name=f"Auditoria_{datetime.now().strftime('%Y%m%d')}.pdf", mime="application/pdf")
