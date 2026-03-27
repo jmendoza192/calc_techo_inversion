@@ -45,12 +45,21 @@ with st.sidebar:
         disponible_afp = int(saldo_afp * 0.25)
         st.info(f"✅ Disponible para inicial (25% AFP): S/ {disponible_afp:,}")
 
-    with st.expander("🏦 Condiciones del Crédito", expanded=True):
+    with st.expander("💳 Subgrupo 1: Tarjetas de Crédito", expanded=True):
+        linea_tc = st.number_input("Línea Total de Tarjetas (S/)", min_value=0, value=5000, step=500)
+        cuota_tc_sbs = int(linea_tc * 0.05)
+        st.warning(f"⚠️ Cuota teórica SBS (5%): S/ {cuota_tc_sbs:,}")
+
+    with st.expander("🏦 Subgrupo 2: Otras Cuotas Fijas", expanded=True):
+        p_personal = st.number_input("Cuota Préstamo Personal (S/)", min_value=0, value=0)
+        p_vehicular = st.number_input("Cuota Préstamo Vehicular (S/)", min_value=0, value=0)
+        p_otros = st.number_input("Otros Créditos (S/)", min_value=0, value=0)
+        
+    with st.expander("🏦 Condiciones del Crédito", expanded=False):
         tea = st.number_input("Tasa Efectiva Anual - TEA (%)", min_value=1.0, max_value=20.0, value=9.5, step=0.1)
         plazo_anios = st.number_input("Plazo del Préstamo (Años)", min_value=5, max_value=30, value=20, step=1)
         
     with st.expander("🎁 Bonos MiVivienda (Tabla 2026)", expanded=True):
-        # Datos de la tabla incluyendo rangos de precio
         datos_bonos = {
             "Rango 1": {"min": 68800, "max": 98100, "bbp": 27400, "verde": 33700},
             "Rango 2": {"min": 98100, "max": 146900, "bbp": 22800, "verde": 29100},
@@ -58,10 +67,7 @@ with st.sidebar:
             "Rango 4": {"min": 244600, "max": 362100, "bbp": 7800, "verde": 14100},
             "Rango 5": {"min": 362100, "max": 488800, "bbp": 0, "verde": 0}
         }
-        
         seleccion_rango = st.selectbox("Seleccionar Rango de Valor", list(datos_bonos.keys()), index=3)
-        
-        # Mostrar dinámicamente el precio del inmueble según el rango
         rango_info = datos_bonos[seleccion_rango]
         st.success(f"🏠 Valor Vivienda: S/ {rango_info['min']:,} - S/ {rango_info['max']:,}")
         
@@ -71,10 +77,8 @@ with st.sidebar:
         monto_bbp = rango_info['bbp'] + extra_integrador if rango_info['bbp'] > 0 else 0
         monto_bbp_verde = rango_info['verde'] + extra_integrador if rango_info['verde'] > 0 else 0
 
-    with st.expander("💳 Deudas (Cuotas Mes)", expanded=False):
-        deudas_totales = st.number_input("Total Cuotas Mensuales (Préstamos/Tarjetas)", value=0)
-
 # --- LÓGICA DE CÁLCULO ---
+deudas_totales = cuota_tc_sbs + p_personal + p_vehicular + p_otros
 capacidad_40 = ingreso * 0.40
 cuota_disponible = int(max(0, capacidad_40 - deudas_totales))
 
@@ -89,7 +93,7 @@ else:
 
 inicial_total = ahorros + disponible_afp
 
-# Escenarios Finales (Sin Decimales)
+# Escenarios Finales
 esc_verde = int(prestamo_max + inicial_total + monto_bbp_verde)
 esc_tradicional = int(prestamo_max + inicial_total + monto_bbp)
 esc_directo = int(prestamo_max + inicial_total)
@@ -102,14 +106,14 @@ escenarios_data = [
 
 # --- CUERPO PRINCIPAL ---
 st.title("🎯 Auditoría financiera - Inversión")
-st.write(f"Proyección financiera estimada a una TEA de {tea}%")
+st.write(f"Análisis detallado de capacidad crediticia bajo parámetros SBS.")
 st.write("---")
 
 # FASE 1: Salud Crediticia
 st.subheader("1. Indicadores de Calificación")
 c_met1, c_met2, c_met3 = st.columns(3)
-c_met1.metric("Cuota Mensual Máx.", f"S/ {cuota_disponible:,}")
-c_met2.metric("Préstamo Hipotecario", f"S/ {prestamo_max:,}")
+c_met1.metric("Cuota Disponible Bruta", f"S/ {cuota_disponible:,}", help="Ingreso x 40% - Todas las deudas (incluyendo 5% TC)")
+c_met2.metric("Préstamo Hipotecario Est.", f"S/ {prestamo_max:,}")
 c_met3.metric("Inicial (Ahorros + AFP)", f"S/ {inicial_total:,}")
 
 # FASE 2: Escenarios
@@ -134,7 +138,7 @@ st.subheader("3. Visualización Comparativa de Inversión")
 df_grafico = pd.DataFrame(escenarios_data)
 fig = px.bar(
     df_grafico, x='nombre', y='monto', color='nombre',
-    color_discrete_map={d['nombre']: d['color_hex'] for d in escenarios_data},
+    color_discrete_map={d['nombre']: d['color_hex'] for d in scenarios_data if 'scenarios_data' in locals() else {d['nombre']: d['color_hex'] for d in escenarios_data}},
     text_auto=True
 )
 fig.update_layout(showlegend=False, plot_bgcolor='rgba(0,0,0,0)', xaxis_title=None, yaxis_title="Monto (S/) Totales")
@@ -147,14 +151,16 @@ st.subheader("🚀 Rutas de Optimización para tu Compra")
 
 opt1, opt2 = st.columns(2)
 with opt1:
-    with st.expander("📉 Plan de Liberación de Capacidad", expanded=True):
-        st.write(f"Si liquidamos tus deudas de S/ {deudas_totales:,}, tu préstamo bancario podría subir significativamente.")
+    with st.expander("📉 Estrategia de Tarjetas de Crédito", expanded=True):
+        st.write(f"Tu línea de S/ {linea_tc:,} consume S/ {cuota_tc_sbs:,} de tu capacidad mensual.")
+        st.write("**Recomendación:** Reducir líneas de crédito no utilizadas para liberar capacidad de préstamo inmediata.")
 
 with opt2:
     with st.expander("📜 Gestión de Gastos de Cierre", expanded=True):
         st.write(f"Gasto estimado de cierre (3%): S/ {int(esc_tradicional * 0.03):,}")
+        st.write("Este monto debe reservarse para trámites notariales y registrales.")
 
 st.write("---")
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
-    st.success("Cálculo completado.")
+    st.success("Cálculo bajo normativa SBS completado.")
