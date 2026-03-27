@@ -101,7 +101,7 @@ st.subheader("1. Salud Crediticia y Diagnóstico")
 
 col_gauge, col_metrics = st.columns([1.2, 2])
 with col_gauge:
-    fig = go.Figure(go.Indicator(mode="gauge+number", value=pct_deuda, title={'text': "Carga de Deuda Actual", 'font': {'size': 20, 'color': 'white'}},
+    fig = go.Figure(go.Indicator(mode="gauge+number", value=pct_deuda, title={'text': "Carga de Deuda Actual"},
         number={'suffix': "%", 'font':{'color':'white'}},
         gauge={'axis': {'range': [None, 50]}, 'bar': {'color': "white"},
                'steps': [{'range': [0, 20], 'color': "#28a745"}, {'range': [20, 35], 'color': "#ffc107"}, {'range': [35, 50], 'color': "#dc3545"}]}))
@@ -145,15 +145,12 @@ o1, o2 = st.columns(2)
 with o1:
     cuota_sim = int(max(0, (ingreso * 0.40) - ((linea_tc*0.5*0.05)+p_personal+p_vehicular+p_otros)))
     inc = int((cuota_sim * factor) - prestamo)
-    if inc > 0: st.success(f"📈 **Oportunidad:** Bajando tarjetas al 50%, tu presupuesto sube **S/ {inc:,}**.")
-    else: st.info("Deuda saludable.")
+    if inc > 0: st.success(f"📈 **Oportunidad:** Bajando tus tarjetas al 50%, tu presupuesto de compra sube aproximadamente **S/ {inc:,}**.")
+    else: st.info("Tu nivel de deuda actual es óptimo para el sistema financiero.")
 with o2: 
     reserva = int((prestamo + inicial) * 0.03)
-    st.warning(f"""
-    📜 **Reserva Administrativa Sugerida (3%): S/ {reserva:,}**
-    \nIncluye: Notaría, Tasación y Gastos Registrales. 
-    \n*(Alcabala S/ 0 por ser inmueble de estreno)*
-    """)
+    # Formato alineado de una sola línea
+    st.warning(f"📜 **Reserva Administrativa Sugerida (3%):** Necesitarás **S/ {reserva:,}** para gastos de notaría, tasación y registrales.")
 
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
