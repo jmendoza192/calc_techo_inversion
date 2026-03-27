@@ -49,7 +49,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. FUNCIÓN DE EXPORTACIÓN PDF PROFESIONAL (SIN CAMBIOS ESTRUCTURALES) ---
+# --- 2. FUNCIÓN DE EXPORTACIÓN PDF PROFESIONAL (INTACTA) ---
 def generar_pdf(datos_informe, escenarios, seleccion_bono):
     pdf = FPDF()
     pdf.add_page()
@@ -182,13 +182,17 @@ for i, col in enumerate([e1, e2, e3]):
 st.write("")
 st.subheader("🚀 Validación de Políticas e Inicial Mínima")
 v1, v2, v3 = st.columns(3)
-porcentaje_ref = (inicial / escenarios[1]['monto']) if escenarios[1]['monto'] > 0 else 0
+
+# FORMULAS DE VALIDACIÓN
+porcentaje_mivivienda = (inicial / escenarios[1]['monto']) if escenarios[1]['monto'] > 0 else 0
+porcentaje_bancario = (inicial / escenarios[2]['monto']) if escenarios[2]['monto'] > 0 else 0 # SOBRE ESCENARIO SIN BONOS
+
 with v1:
-    if porcentaje_ref >= 0.075: st.success(f"✅ **Fondo Mivivienda:** Su inicial de S/ {inicial:,} cumple con el 7.5% mínimo legal.")
-    else: st.error(f"⚠️ **Fondo Mivivienda:** Su inicial ({porcentaje_ref*100:.1f}%) es menor al 7.5% legal.")
+    if porcentaje_mivivienda >= 0.075: st.success(f"✅ **Fondo Mivivienda:** Su inicial de S/ {inicial:,} cumple con el 7.5% mínimo legal.")
+    else: st.error(f"⚠️ **Fondo Mivivienda:** Su inicial ({porcentaje_mivivienda*100:.1f}%) es menor al 7.5% legal.")
 with v2:
-    if porcentaje_ref >= 0.10: st.success("🏦 **Perfil Bancario:** Su inicial supera el 10%, facilitando la aprobación comercial.")
-    else: st.warning(f"🏦 **Perfil Bancario:** Inicial de {porcentaje_ref*100:.1f}%. El banco podría pedir llegar al 10%.")
+    if porcentaje_bancario >= 0.10: st.success(f"🏦 **Perfil Bancario:** Inicial de {porcentaje_bancario*100:.1f}%. Supera el 10%, facilitando la aprobación comercial.")
+    else: st.warning(f"🏦 **Perfil Bancario:** Inicial de {porcentaje_bancario*100:.1f}%. El banco podría pedir llegar al 10%.")
 with v3:
     reserva = int((prestamo + inicial) * 0.03)
     st.warning(f"📜 **Reserva Administrativa (3%):** Necesitarás **S/ {reserva:,}** para gastos de notaría y registros.")
