@@ -11,21 +11,40 @@ st.set_page_config(page_title="Auditoría Financiera | Jancarlo Inmobiliario", l
 st.markdown("""
     <style>
     .main { background-color: #0e1117; }
-    [data-testid="stMetricValue"] { color: #ffffff !important; font-weight: bold !important; font-size: 2.1rem !important; }
-    [data-testid="stMetricLabel"] { color: #a1a1a1 !important; font-size: 1rem !important; }
+    [data-testid="stMetricValue"] { color: #ffffff !important; font-weight: bold !important; font-size: 1.9rem !important; }
+    [data-testid="stMetricLabel"] { color: #a1a1a1 !important; font-size: 0.9rem !important; }
     div[data-testid="stMetric"] {
         background-color: #1f2630;
-        padding: 20px;
+        padding: 18px;
         border-radius: 12px;
         border: 1px solid #30363d;
     }
     .resultado-card { 
-        padding: 25px; border-radius: 15px; color: white !important; text-align: center; margin-bottom: 20px;
-        min-height: 220px;
+        padding: 22px; border-radius: 15px; color: white !important; text-align: center; margin-bottom: 20px;
+        min-height: 200px;
     }
     .verde { background: linear-gradient(135deg, #28a745, #1e7e34); }
     .azul { background: linear-gradient(135deg, #0e2647, #1b3a61); }
     .gris { background: linear-gradient(135deg, #6c757d, #495057); }
+    
+    .opt-card {
+        padding: 18px; 
+        border-radius: 10px; 
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .opt-blue { background-color: #1e3a8a; border: 1px solid #3b82f6; }
+    .opt-green { background-color: #064e3b; border: 1px solid #10b981; }
+    
+    .opt-header { margin-top:0; font-size: 1.05rem; font-weight: bold; margin-bottom: 5px; }
+    .header-blue { color: #60a5fa; }
+    .header-green { color: #34d399; }
+    
+    .opt-text { font-size: 0.85rem; color: #d1d5db; margin-bottom: 8px; line-height: 1.2; }
+    .opt-monto { color: white; margin-bottom: 0; font-size: 1.45rem; font-weight: bold; }
+    
     #MainMenu, footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
@@ -100,9 +119,9 @@ prestamo = int(cuota_disp * factor)
 inicial = ahorros + disponible_afp
 
 escenarios = [
-    {"nombre": "ECO-SOSTENIBLE", "monto": prestamo + inicial + m_verde, "clase": "verde", "desc": f"Bono: S/ {m_verde:,}", "color": "#28a745"},
-    {"nombre": "TRADICIONAL", "monto": prestamo + inicial + m_bbp, "clase": "azul", "desc": f"Bono: S/ {m_bbp:,}", "color": "#0e2647"},
-    {"nombre": "SIN BONOS", "monto": prestamo + inicial, "clase": "gris", "desc": "Solo Rec. Propios", "color": "#6c757d"}
+    {"nombre": "ECO-SOSTENIBLE", "monto": prestamo + inicial + m_verde, "clase": "verde", "desc": f"Bono: S/ {m_verde:,}"},
+    {"nombre": "TRADICIONAL", "monto": prestamo + inicial + m_bbp, "clase": "azul", "desc": f"Bono: S/ {m_bbp:,}"},
+    {"nombre": "SIN BONOS", "monto": prestamo + inicial, "clase": "gris", "desc": "Solo Rec. Propios"}
 ]
 
 # --- UI CUERPO ---
@@ -116,7 +135,7 @@ with col_gauge:
         number={'suffix': "%", 'font':{'color':'white'}},
         gauge={'axis': {'range': [None, 50]}, 'bar': {'color': "white"},
                'steps': [{'range': [0, 20], 'color': "#28a745"}, {'range': [20, 35], 'color': "#ffc107"}, {'range': [35, 50], 'color': "#dc3545"}]}))
-    fig.update_layout(height=380, paper_bgcolor='rgba(0,0,0,0)', font={'color': "white"})
+    fig.update_layout(height=350, paper_bgcolor='rgba(0,0,0,0)', font={'color': "white"})
     st.plotly_chart(fig, use_container_width=True)
 
 with col_metrics:
@@ -137,11 +156,11 @@ for i, col in enumerate([e1, e2, e3]):
     with col:
         st.markdown(f"""
             <div class="resultado-card {esc['clase']}">
-                <h3>{esc['nombre']}</h3>
-                <h1>S/ {esc['monto']:,}</h1>
-                <p>{esc['desc']}</p>
+                <h3 style="font-size: 1.1rem;">{esc['nombre']}</h3>
+                <h1 style="font-size: 1.9rem;">S/ {esc['monto']:,}</h1>
+                <p style="font-size: 0.9rem;">{esc['desc']}</p>
                 <hr style="border: 0.5px solid rgba(255,255,255,0.3)">
-                <p style="font-size: 1rem;"><b>Inicial Real: {porcentaje_inicial:.2f}%</b></p>
+                <p style="font-size: 0.9rem;"><b>Inicial Real: {porcentaje_inicial:.2f}%</b></p>
             </div>
         """, unsafe_allow_html=True)
 
@@ -150,36 +169,75 @@ st.write("")
 st.subheader("🚀 Validación de Políticas e Inicial Mínima")
 v1, v2, v3 = st.columns(3)
 
-# Lógica de Validación
-es_apto_mivivienda = (inicial / escenarios[1]['monto']) >= 0.075 if escenarios[1]['monto'] > 0 else False
-es_apto_banco = (inicial / escenarios[1]['monto']) >= 0.10 if escenarios[1]['monto'] > 0 else False
+porcentaje_ref = (inicial / escenarios[1]['monto']) if escenarios[1]['monto'] > 0 else 0
 
 with v1:
-    if es_apto_mivivienda:
-        st.success(f"✅ **Fondo Mivivienda:** Su inicial de S/ {inicial:,} cumple con el 7.5% mínimo legal para acceder a bonos.")
+    if porcentaje_ref >= 0.075:
+        st.success(f"✅ **Fondo Mivivienda:** Su inicial de S/ {inicial:,} cumple con el 7.5% mínimo legal.")
     else:
-        st.error(f"⚠️ **Fondo Mivivienda:** Su inicial es menor al 7.5% legal. Necesita ahorrar más para calificar.")
+        st.error(f"⚠️ **Fondo Mivivienda:** Su inicial ({porcentaje_ref*100:.1f}%) es menor al 7.5% legal.")
 
 with v2:
-    if es_apto_banco:
-        st.success("🏦 **Perfil Bancario:** Su inicial supera el 10%, lo que facilita la aprobación rápida del crédito.")
+    if porcentaje_ref >= 0.10:
+        st.success("🏦 **Perfil Bancario:** Su inicial supera el 10%, facilitando la aprobación comercial.")
     else:
-        st.warning("🏦 **Perfil Bancario:** Su inicial es menor al 10%. Quizás el banco pida más ahorro dependiendo de su perfil.")
+        st.warning(f"🏦 **Perfil Bancario:** Inicial de {porcentaje_ref*100:.1f}%. El banco podría pedir llegar al 10%.")
 
 with v3:
     reserva = int((prestamo + inicial) * 0.03)
-    st.warning(f"📜 **Reserva Administrativa Sugerida (3%):** Necesitarás **S/ {reserva:,}** para gastos de notaría, tasación y registrales.")
+    st.warning(f"📜 **Reserva Administrativa (3%):** Necesitarás **S/ {reserva:,}** para gastos de notaría y registros.")
 
+# --- 4. ESTRATEGIAS DE OPTIMIZACIÓN ---
 st.write("---")
-st.subheader("💡 Estrategia de Optimización")
-cuota_sim = int(max(0, (ingreso * 0.40) - ((linea_tc*0.5*0.05)+p_personal+p_vehicular+p_otros)))
-inc = int((cuota_sim * factor) - prestamo)
-if inc > 0:
-    st.success(f"📈 **Oportunidad:** Bajando tus tarjetas al 50%, tu presupuesto de compra sube aproximadamente **S/ {inc:,}**.")
-else:
-    st.info("Tu nivel de deuda actual es óptimo para el sistema financiero.")
+st.subheader("💡 Estrategias de Optimización")
+opt_col1, opt_col2, opt_col3 = st.columns(3)
 
+with opt_col1:
+    # Optimización por Deuda
+    cuota_sim_deuda = int(max(0, (ingreso * 0.40) - ((linea_tc*0.5*0.05)+p_personal+p_vehicular+p_otros)))
+    inc_deuda = int((cuota_sim_deuda * factor) - prestamo)
+    monto_opt1 = inc_deuda if inc_deuda > 0 else 0
+    st.markdown(f"""
+        <div class="opt-card opt-blue">
+            <div class="opt-header header-blue">📈 Proyección por Deuda</div>
+            <div class="opt-text">Bajando tus tarjetas al 50%, tu techo de inversión sube:</div>
+            <div class="opt-monto">+ S/ {monto_opt1:,}</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+with opt_col2:
+    # Optimización por Ingresos
+    ingreso_proy = ingreso + 500
+    cuota_proy = int(max(0, (ingreso_proy * 0.40) - deudas))
+    prestamo_proy = int(cuota_proy * factor)
+    inc_ingreso = prestamo_proy - prestamo
+    st.markdown(f"""
+        <div class="opt-card opt-blue">
+            <div class="opt-header header-blue">🚀 Proyección por Ingresos</div>
+            <div class="opt-text">Si tus ingresos aumentan en <b>S/ 500</b>, tu techo de inversión sube:</div>
+            <div class="opt-monto">+ S/ {inc_ingreso:,}</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+with opt_col3:
+    # Optimización por Ahorro Estratégico (Actualizada)
+    ahorro_extra = 5000
+    nuevo_techo = escenarios[1]['monto'] + ahorro_extra
+    nueva_inicial_pct = ((inicial + ahorro_extra) / nuevo_techo) * 100 if nuevo_techo > 0 else 0
+    
+    st.markdown(f"""
+        <div class="opt-card opt-green">
+            <div class="opt-header header-green">💰 Ahorro Estratégico</div>
+            <div class="opt-text">Si ahorras <b>S/ 5,000</b> extra, tu inicial sube a:</div>
+            <div class="opt-monto">{nueva_inicial_pct:.2f}%</div>
+            <div style="font-size: 0.75rem; color: #a7f3d0; margin-top: 5px; line-height: 1.1;">
+                * Hace más viable el crédito y permite negociar una mejor tasa bancaria.
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+st.write("")
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
     pdf = generar_pdf({"Ingreso": f"S/ {ingreso:,}", "Deuda": f"{pct_deuda:.2f}%", "Cuota": f"S/ {cuota_disp:,}"}, escenarios)
-    st.download_button("📥 Descargar Reporte PDF de Marca", data=pdf, file_name="Reporte_Inversion.pdf")
+    st.download_button("📥 Descargar Reporte PDF", data=pdf, file_name="Reporte_Inversion.pdf")
