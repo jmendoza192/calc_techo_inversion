@@ -125,23 +125,18 @@ for i, col in enumerate([e1, e2, e3]):
     with col:
         st.markdown(f'<div class="resultado-card {escenarios[i]["clase"]}"><h3>{escenarios[i]["nombre"]}</h3><h1>S/ {escenarios[i]["monto"]:,}</h1><p>{escenarios[i]["desc"]}</p></div>', unsafe_allow_html=True)
 
-# --- GRÁFICO DE BARRAS POTENCIADO ---
+# --- GRÁFICO DE BARRAS ---
 df_grafico = pd.DataFrame(escenarios)
 df_grafico['texto_barra'] = df_grafico['monto'].apply(lambda x: f"S/. {x:,.0f}")
-
 fig_bar = px.bar(df_grafico, x='nombre', y='monto', color='nombre', 
                  color_discrete_map={esc['nombre']: esc['color'] for esc in escenarios},
                  text='texto_barra')
-
 fig_bar.update_layout(
     showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
     font=dict(color="white"), xaxis_title=None, yaxis_title="Monto Total (S/)",
     xaxis=dict(tickfont=dict(size=14)), yaxis=dict(tickfont=dict(size=14))
 )
-
-fig_bar.update_traces(
-    textposition='inside', textfont_size=22, insidetextanchor='middle', marker_line_width=0
-)
+fig_bar.update_traces(textposition='inside', textfont_size=22, insidetextanchor='middle', marker_line_width=0)
 st.plotly_chart(fig_bar, use_container_width=True)
 
 st.write("---")
@@ -152,7 +147,13 @@ with o1:
     inc = int((cuota_sim * factor) - prestamo)
     if inc > 0: st.success(f"📈 **Oportunidad:** Bajando tarjetas al 50%, tu presupuesto sube **S/ {inc:,}**.")
     else: st.info("Deuda saludable.")
-with o2: st.warning(f"📜 **Reserva Administrativa (3%):** S/ {int((prestamo+inicial)*0.03):,}")
+with o2: 
+    reserva = int((prestamo + inicial) * 0.03)
+    st.warning(f"""
+    📜 **Reserva Administrativa Sugerida (3%): S/ {reserva:,}**
+    \nIncluye: Notaría, Tasación y Gastos Registrales. 
+    \n*(Alcabala S/ 0 por ser inmueble de estreno)*
+    """)
 
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
