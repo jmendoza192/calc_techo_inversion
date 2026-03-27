@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS
+# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS UI
 st.set_page_config(page_title="Auditoría Financiera | Jancarlo Inmobiliario", layout="wide")
 
 st.markdown("""
@@ -84,17 +84,20 @@ pct_endeudamiento = (deudas_totales / ingreso * 100) if ingreso > 0 else 0
 capacidad_40 = ingreso * 0.40
 cuota_disponible = int(max(0, capacidad_40 - deudas_totales))
 
+# Cálculo Financiero
 tem = (1 + tea/100)**(1/12) - 1
 n_meses = plazo_anios * 12
 factor = (1 - (1 + tem)**-n_meses) / tem if tem > 0 else 0
 prestamo_max = int(cuota_disponible * factor)
 
+# Simulación Mejora (Reducir TC al 50%)
 cuota_tc_sim = int((linea_tc * 0.5) * 0.05)
 cuota_disp_sim = int(max(0, capacidad_40 - (cuota_tc_sim + p_personal + p_vehicular + p_otros)))
 prestamo_max_simulado = int(cuota_disp_sim * factor)
 incremento_prestamo = prestamo_max_simulado - prestamo_max
 inicial_total = ahorros + disponible_afp
 
+# Escenarios Finales
 esc_verde = int(prestamo_max + inicial_total + monto_bbp_verde)
 esc_tradicional = int(prestamo_max + inicial_total + monto_bbp)
 esc_directo = int(prestamo_max + inicial_total)
@@ -107,10 +110,10 @@ escenarios_data = [
 
 # --- CUERPO PRINCIPAL ---
 st.title("🎯 Auditoría financiera - Inversión")
-st.write(f"Diagnóstico técnico bajo normativa SBS y MiVivienda 2026.")
+st.write(f"Análisis detallado de capacidad crediticia bajo parámetros SBS.")
 st.write("---")
 
-# FASE 1: Semáforo y Métricas
+# FASE 1: Salud Crediticia
 st.subheader("1. Salud Crediticia y Diagnóstico")
 col_gauge, col_mets = st.columns([1.2, 2])
 
@@ -136,26 +139,24 @@ with col_gauge:
     fig_gauge.update_layout(height=280, margin=dict(l=30, r=30, t=50, b=10))
     st.plotly_chart(fig_gauge, use_container_width=True)
     
-    # GUÍA TÉCNICA (DEBAJO DEL SEMÁFORO)
-    st.markdown("""
-    <div style="background-color: #ffffff; padding: 18px; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        <p style="font-size: 1rem; font-weight: bold; margin-bottom: 12px; color: #1e1e1e; border-bottom: 2px solid #f0f0f0; padding-bottom: 5px;">📊 Escala de Evaluación Bancaria</p>
-        <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
+    # GUÍA DE EVALUACIÓN BANCARIA (Formato Desplegable Unificado)
+    with st.expander("📋 Guía de Evaluación Bancaria", expanded=False):
+        st.markdown("""
+        <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
             <tr style="border-bottom: 1px solid #f5f5f5;">
-                <td style="color: #28a745; font-weight: bold; padding: 8px 0; width: 35%;">0% - 20%</td>
-                <td style="color: #444; padding: 8px 0;"><b>Perfil Prime:</b> Calificación rápida y acceso a mejores tasas.</td>
+                <td style="color: #28a745; font-weight: bold; padding: 8px 0;">0% - 20%</td>
+                <td style="color: #444; padding: 8px 0;"><b>Perfil Prime:</b> Calificación inmediata y mejor tasa.</td>
             </tr>
             <tr style="border-bottom: 1px solid #f5f5f5;">
                 <td style="color: #ffb100; font-weight: bold; padding: 8px 0;">21% - 35%</td>
-                <td style="color: #444; padding: 8px 0;"><b>Riesgo Medio:</b> Aprobación condicionada a sustento de ingresos.</td>
+                <td style="color: #444; padding: 8px 0;"><b>Riesgo Medio:</b> Aprobación sujeta a sustento técnico.</td>
             </tr>
             <tr>
                 <td style="color: #dc3545; font-weight: bold; padding: 8px 0;">36% - 40%</td>
-                <td style="color: #444; padding: 8px 0;"><b>Límite Crítico:</b> Requiere liquidar deudas para calificar.</td>
+                <td style="color: #444; padding: 8px 0;"><b>Límite Crítico:</b> Requiere liberar carga financiera.</td>
             </tr>
         </table>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
 with col_mets:
     st.write("")
@@ -165,7 +166,7 @@ with col_mets:
     st.write("---")
     st.metric("Inicial Total (Ahorros + AFP)", f"S/ {inicial_total:,}")
     st.write("---")
-    st.info("💡 **Dato Bancario:** El banco evalúa tu capacidad basándose en que el total de tus cuotas (incluyendo la nueva hipoteca) no supere el 40% de tu sueldo neto.")
+    st.info("💡 **Criterio Bancario:** Los bancos limitan tu endeudamiento total al 40% de tu ingreso neto para mitigar riesgos de impago.")
 
 # FASE 2: Escenarios
 st.write("---")
@@ -190,19 +191,24 @@ st.plotly_chart(fig_bar, use_container_width=True)
 st.write("---")
 st.subheader("🚀 Estrategia de Poder de Compra")
 if incremento_prestamo > 0:
-    st.success(f"📈 **Oportunidad Detectada:** Si reduces tu línea de tarjeta a la mitad (S/ {int(linea_tc*0.5):,}), tu presupuesto de compra sube en **S/ {incremento_prestamo:,}**.")
+    st.success(f"📈 **Acción Recomendada:** Al reducir tu línea de tarjeta a la mitad (S/ {int(linea_tc*0.5):,}), tu capacidad de compra se expande en **S/ {incremento_prestamo:,}**.")
 else:
-    st.info("Tu nivel de deuda es saludable para el proceso hipotecario.")
+    st.info("Tu estructura de deuda actual permite una calificación hipotecaria fluida.")
 
 # FASE 5: Optimización Final
 st.write("---")
 o1, o2 = st.columns(2)
 with o1:
-    with st.expander("📉 Análisis de Deudas", expanded=True):
-        st.write(f"Carga mensual actual: **S/ {deudas_totales:,}**.")
-with o2:
-    with st.expander("📜 Reserva para Gastos Administrativos", expanded=True):
-        st.write(f"Reserva estimada (3%): **S/ {int(esc_tradicional * 0.03):,}**")
+    with st.expander("📉 Análisis de Deudas Mensuales", expanded=True):
+        st.write(f"Carga financiera mensual actual: **S/ {deudas_totales:,}**.")
+        if pct_endeudamiento > 35:
+            st.warning("Se recomienda reducir cuotas fijas para mejorar el perfil de riesgo ante el banco.")
 
-if st.button("✅ Finalizar"):
+with o2:
+    with st.expander("📜 Reserva para Gastos de Cierre", expanded=True):
+        gasto_est = int(esc_tradicional * 0.03)
+        st.write(f"Gastos notariales y registrales estimados (3%): **S/ {gasto_est:,}**")
+
+if st.button("✅ Finalizar Auditoría"):
     st.balloons()
+    st.success("Diagnóstico financiero completado con éxito.")
