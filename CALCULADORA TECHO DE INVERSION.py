@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from fpdf import FPDF
+from datetime import datetime
 
 # 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS UI
 st.set_page_config(page_title="Auditoría Financiera | Jancarlo Inmobiliario", layout="wide")
@@ -34,6 +36,68 @@ st.markdown("""
     #MainMenu, footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
+
+# --- FUNCIÓN GENERAR PDF PROFESIONAL ---
+def generar_pdf(datos_informe, escenarios):
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Encabezado
+    pdf.set_font("Arial", 'B', 16)
+    pdf.set_text_color(30, 30, 30)
+    pdf.cell(0, 10, "AUDITORIA FINANCIERA INMOBILIARIA", ln=True, align='C')
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 5, f"Fecha de emision: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True, align='C')
+    pdf.ln(10)
+    
+    # Sección 1: Perfil Financiero
+    pdf.set_fill_color(240, 240, 240)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 10, " 1. RESUMEN DEL PERFIL FINANCIERO", ln=True, fill=True)
+    pdf.set_font("Arial", '', 11)
+    pdf.ln(2)
+    pdf.cell(90, 8, f"Ingreso Neto Mensual:", 0)
+    pdf.cell(0, 8, f"S/ {datos_informe['ingreso']:,}", 1, ln=True)
+    pdf.cell(90, 8, f"Carga de Deuda Actual (SBS):", 0)
+    pdf.cell(0, 8, f"{datos_informe['deuda_pct']:.2f}%", 1, ln=True)
+    pdf.cell(90, 8, f"Cuota Disponible para Hipoteca:", 0)
+    pdf.cell(0, 8, f"S/ {datos_informe['cuota_disp']:,}", 1, ln=True)
+    pdf.cell(90, 8, f"Prestamo Hipotecario Estimado:", 0)
+    pdf.cell(0, 8, f"S/ {datos_informe['prestamo_max']:,}", 1, ln=True)
+    pdf.ln(10)
+    
+    # Sección 2: Techo de Inversión
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 10, " 2. CAPACIDAD DE INVERSION (TECHO MAXIMO)", ln=True, fill=True)
+    pdf.ln(4)
+    
+    # Tabla de Escenarios
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_fill_color(0, 123, 255) # Azul
+    pdf.set_text_color(255, 255, 255)
+    pdf.cell(70, 10, " ESCENARIO", 1, 0, 'C', True)
+    pdf.cell(60, 10, " TOTAL INVERSION", 1, 0, 'C', True)
+    pdf.cell(60, 10, " DETALLE", 1, 1, 'C', True)
+    
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font("Arial", '', 10)
+    for esc in escenarios:
+        pdf.cell(70, 10, f" {esc['nombre']}", 1)
+        pdf.cell(60, 10, f" S/ {esc['monto']:,}", 1, 0, 'C')
+        pdf.cell(60, 10, f" {esc['desc']}", 1, 1, 'C')
+    
+    pdf.ln(10)
+    
+    # Sección 3: Estrategia
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 10, " 3. NOTAS Y ESTRATEGIA DE MEJORA", ln=True, fill=True)
+    pdf.set_font("Arial", '', 10)
+    pdf.ln(2)
+    pdf.multi_cell(0, 8, f"Reserva estimada para gastos de cierre (3%): S/ {int(escenarios[1]['monto']*0.03):,}\n"
+                         f"Incremento potencial de prestamo si se reduce deuda: S/ {datos_informe['incremento']:,}\n"
+                         "Este documento es una proyeccion tecnica basada en politicas bancarias generales.")
+
+    return pdf.output(dest='S').encode('latin-1')
 
 # --- PANEL LATERAL: INPUTS ---
 with st.sidebar:
@@ -100,9 +164,9 @@ esc_tradicional = int(prestamo_max + inicial_total + monto_bbp)
 esc_directo = int(prestamo_max + inicial_total)
 
 escenarios_data = [
-    {"nombre": "ECO-SOSTENIBLE", "monto": esc_verde, "clase": "verde", "color_hex": "#28a745", "desc": f"Bonos: S/ {monto_bbp_verde:,}"},
+    {"nombre": "ECO-SOSTENIBLE", "monto": esc_verde, "clase": "verde", "color_hex": "#28a745", "desc": f"Bono: S/ {monto_bbp_verde:,}"},
     {"nombre": "MIVIVIENDA TRADICIONAL", "monto": esc_tradicional, "clase": "azul", "color_hex": "#007bff", "desc": f"Bono: S/ {monto_bbp:,}"},
-    {"nombre": "SIN BONOS", "monto": esc_directo, "clase": "gris", "color_hex": "#6c757d", "desc": "Solo Recursos Propios"}
+    {"nombre": "SIN BONOS", "monto": esc_directo, "clase": "gris", "color_hex": "#6c757d", "desc": "Solo Rec. Propios"}
 ]
 
 # --- CUERPO PRINCIPAL ---
@@ -135,7 +199,6 @@ with col_gauge:
     fig_gauge.update_layout(height=280, margin=dict(l=30, r=30, t=50, b=10))
     st.plotly_chart(fig_gauge, use_container_width=True)
     
-    # GUÍA TÉCNICA (Corrección de color de fuente a blanco)
     with st.expander("📋 Guía de Evaluación Bancaria", expanded=False):
         st.markdown("""
         <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
@@ -183,24 +246,27 @@ fig_bar.update_layout(showlegend=False, plot_bgcolor='rgba(0,0,0,0)', yaxis_titl
 fig_bar.update_traces(texttemplate='S/ %{y:,.0f}', textposition='outside')
 st.plotly_chart(fig_bar, use_container_width=True)
 
-# FASE 4: Estrategia de Mejora
+# FASE 4 y 5: Finalización y Exportación
 st.write("---")
-st.subheader("🚀 Estrategia de Poder de Compra")
-if incremento_prestamo > 0:
-    st.success(f"📈 **Oportunidad Detectada:** Al reducir tu línea de tarjeta a la mitad (S/ {int(linea_tc*0.5):,}), tu presupuesto de compra sube en **S/ {incremento_prestamo:,}**.")
-else:
-    st.info("Tu nivel de deuda es saludable para el proceso hipotecario.")
-
-# FASE 5: Optimización Final
-st.write("---")
-o1, o2 = st.columns(2)
-with o1:
-    with st.expander("📉 Análisis de Deudas Mensuales", expanded=True):
-        st.write(f"Carga financiera mensual actual: **S/ {deudas_totales:,}**.")
-with o2:
-    with st.expander("📜 Reserva para Gastos Administrativos", expanded=True):
-        gasto_est = int(esc_tradicional * 0.03)
-        st.write(f"Gastos notariales y registrales estimados (3%): **S/ {gasto_est:,}**")
-
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
+    
+    # Preparar datos para el informe
+    datos_pdf = {
+        'ingreso': ingreso,
+        'deuda_pct': pct_endeudamiento,
+        'cuota_disp': cuota_disponible,
+        'prestamo_max': prestamo_max,
+        'incremento': incremento_prestamo
+    }
+    
+    # Generar el archivo
+    pdf_bytes = generar_pdf(datos_pdf, escenarios_data)
+    
+    st.success("Auditoria finalizada. Ya puedes descargar el reporte oficial.")
+    st.download_button(
+        label="📥 Descargar Reporte PDF",
+        data=pdf_bytes,
+        file_name=f"Auditoria_Inmobiliaria_{datetime.now().strftime('%Y%m%d')}.pdf",
+        mime="application/pdf"
+    )
