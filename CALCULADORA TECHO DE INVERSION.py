@@ -88,7 +88,6 @@ factor = (1 - (1 + tem)**-(plazo * 12)) / tem if tem > 0 else 0
 prestamo = int(cuota_disp * factor)
 inicial = ahorros + disponible_afp
 
-# Escenarios ordenados para tarjetas y gráfico
 escenarios = [
     {"nombre": "ECO-SOSTENIBLE", "monto": prestamo + inicial + m_verde, "clase": "verde", "desc": f"Bono: S/ {m_verde:,}", "color": "#28a745"},
     {"nombre": "MI VIVIENDA TRADICIONAL", "monto": prestamo + inicial + m_bbp, "clase": "azul", "desc": f"Bono: S/ {m_bbp:,}", "color": "#0e2647"},
@@ -102,7 +101,7 @@ st.subheader("1. Salud Crediticia y Diagnóstico")
 
 col_gauge, col_metrics = st.columns([1.2, 2])
 with col_gauge:
-    fig = go.Figure(go.Indicator(mode="gauge+number", value=pct_deuda, title={'text': "Carga de Deuda Actual"},
+    fig = go.Figure(go.Indicator(mode="gauge+number", value=pct_deuda, title={'text': "Carga de Deuda Actual", 'font': {'size': 20, 'color': 'white'}},
         number={'suffix': "%", 'font':{'color':'white'}},
         gauge={'axis': {'range': [None, 50]}, 'bar': {'color': "white"},
                'steps': [{'range': [0, 20], 'color': "#28a745"}, {'range': [20, 35], 'color': "#ffc107"}, {'range': [35, 50], 'color': "#dc3545"}]}))
@@ -126,13 +125,23 @@ for i, col in enumerate([e1, e2, e3]):
     with col:
         st.markdown(f'<div class="resultado-card {escenarios[i]["clase"]}"><h3>{escenarios[i]["nombre"]}</h3><h1>S/ {escenarios[i]["monto"]:,}</h1><p>{escenarios[i]["desc"]}</p></div>', unsafe_allow_html=True)
 
-# --- GRÁFICO DE BARRAS (Ordenado) ---
+# --- GRÁFICO DE BARRAS POTENCIADO ---
 df_grafico = pd.DataFrame(escenarios)
+df_grafico['texto_barra'] = df_grafico['monto'].apply(lambda x: f"S/. {x:,.0f}")
+
 fig_bar = px.bar(df_grafico, x='nombre', y='monto', color='nombre', 
                  color_discrete_map={esc['nombre']: esc['color'] for esc in escenarios},
-                 text_auto='.s')
-fig_bar.update_layout(showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
-                      font=dict(color="white"), xaxis_title=None, yaxis_title="Monto Total (S/)")
+                 text='texto_barra')
+
+fig_bar.update_layout(
+    showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
+    font=dict(color="white"), xaxis_title=None, yaxis_title="Monto Total (S/)",
+    xaxis=dict(tickfont=dict(size=14)), yaxis=dict(tickfont=dict(size=14))
+)
+
+fig_bar.update_traces(
+    textposition='inside', textfont_size=22, insidetextanchor='middle', marker_line_width=0
+)
 st.plotly_chart(fig_bar, use_container_width=True)
 
 st.write("---")
@@ -148,4 +157,4 @@ with o2: st.warning(f"📜 **Reserva Administrativa (3%):** S/ {int((prestamo+in
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
     pdf = generar_pdf({"Ingreso": f"S/ {ingreso:,}", "Deuda": f"{pct_deuda:.2f}%", "Cuota": f"S/ {cuota_disp:,}"}, escenarios)
-    st.download_button("📥 Descargar Reporte PDF", data=pdf, file_name="Reporte_Inversion.pdf")
+    st.download_button("📥 Descargar Reporte PDF de Marca", data=pdf, file_name="Reporte_Inversion.pdf")
