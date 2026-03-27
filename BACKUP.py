@@ -21,6 +21,7 @@ st.markdown("""
     }
     .resultado-card { 
         padding: 25px; border-radius: 15px; color: white !important; text-align: center; margin-bottom: 20px;
+        min-height: 220px;
     }
     .verde { background: linear-gradient(135deg, #28a745, #1e7e34); }
     .azul { background: linear-gradient(135deg, #0e2647, #1b3a61); }
@@ -58,7 +59,6 @@ with st.sidebar:
         ahorros = st.number_input("Ahorros Líquidos (S/)", min_value=0, value=15000)
         saldo_afp = st.number_input("Saldo Total en AFP (S/)", min_value=0, value=40000)
         disponible_afp = int(saldo_afp * 0.25)
-        # CORRECCIÓN 1: Formato Caption para AFP
         st.caption(f"✅ Disponible para inicial (25% AFP): S/ {disponible_afp:,}")
 
     with st.expander("💳 Subgrupo 1: Tarjetas", expanded=True):
@@ -83,7 +83,6 @@ with st.sidebar:
             "R5": {"b": 0, "v": 0, "rango": "Más de S/ 355,100 (Sin Bono)"}
         }
         sel = st.selectbox("Seleccione Rango de Vivienda", list(datos_bonos.keys()), index=3)
-        # CORRECCIÓN 2: Formato Caption para Rango de Precio
         st.caption(f"🏷️ Precio Vivienda: {datos_bonos[sel]['rango']}")
         
         integrador = st.checkbox("¿Bono Integrador? (+3,600)")
@@ -91,7 +90,7 @@ with st.sidebar:
         m_bbp = datos_bonos[sel]['b'] + extra if datos_bonos[sel]['b'] > 0 else 0
         m_verde = datos_bonos[sel]['v'] + extra if datos_bonos[sel]['v'] > 0 else 0
 
-# --- LÓGICA ---
+# --- LÓGICA FINANCIERA ---
 deudas = cuota_tc_sbs + p_personal + p_vehicular + p_otros
 pct_deuda = (deudas / ingreso * 100) if ingreso > 0 else 0
 cuota_disp = int(max(0, (ingreso * 0.40) - deudas))
@@ -102,7 +101,7 @@ inicial = ahorros + disponible_afp
 
 escenarios = [
     {"nombre": "ECO-SOSTENIBLE", "monto": prestamo + inicial + m_verde, "clase": "verde", "desc": f"Bono: S/ {m_verde:,}", "color": "#28a745"},
-    {"nombre": "MI VIVIENDA TRADICIONAL", "monto": prestamo + inicial + m_bbp, "clase": "azul", "desc": f"Bono: S/ {m_bbp:,}", "color": "#0e2647"},
+    {"nombre": "TRADICIONAL", "monto": prestamo + inicial + m_bbp, "clase": "azul", "desc": f"Bono: S/ {m_bbp:,}", "color": "#0e2647"},
     {"nombre": "SIN BONOS", "monto": prestamo + inicial, "clase": "gris", "desc": "Solo Rec. Propios", "color": "#6c757d"}
 ]
 
@@ -119,8 +118,6 @@ with col_gauge:
                'steps': [{'range': [0, 20], 'color': "#28a745"}, {'range': [20, 35], 'color': "#ffc107"}, {'range': [35, 50], 'color': "#dc3545"}]}))
     fig.update_layout(height=380, paper_bgcolor='rgba(0,0,0,0)', font={'color': "white"})
     st.plotly_chart(fig, use_container_width=True)
-    with st.expander("📋 Guía de Evaluación Bancaria"):
-        st.markdown("<small>0-20%: Perfil Prime | 21-35%: Riesgo Medio | 36-40%: Límite Crítico</small>", unsafe_allow_html=True)
 
 with col_metrics:
     met_c1, met_c2 = st.columns(2)
@@ -128,40 +125,59 @@ with col_metrics:
     met_c2.metric("Préstamo Hipotecario", f"S/ {prestamo:,}")
     st.write("")
     st.metric("Inicial Total (Ahorros + AFP)", f"S/ {inicial:,}")
-    st.info("💡 **Dato Bancario:** Los bancos suelen limitar el total de tus deudas mensuales al 40% de tus ingresos netos.")
+    st.info("💡 **Dato Bancario:** Los bancos limitan tus deudas mensuales al 40% de tus ingresos netos.")
 
 st.write("---")
 st.subheader("2. Tu Techo de Inversión por Proyecto")
 e1, e2, e3 = st.columns(3)
+
 for i, col in enumerate([e1, e2, e3]):
+    esc = escenarios[i]
+    porcentaje_inicial = (inicial / esc['monto']) * 100 if esc['monto'] > 0 else 0
     with col:
-        st.markdown(f'<div class="resultado-card {escenarios[i]["clase"]}"><h3>{escenarios[i]["nombre"]}</h3><h1>S/ {escenarios[i]["monto"]:,}</h1><p>{escenarios[i]["desc"]}</p></div>', unsafe_allow_html=True)
+        st.markdown(f"""
+            <div class="resultado-card {esc['clase']}">
+                <h3>{esc['nombre']}</h3>
+                <h1>S/ {esc['monto']:,}</h1>
+                <p>{esc['desc']}</p>
+                <hr style="border: 0.5px solid rgba(255,255,255,0.3)">
+                <p style="font-size: 1rem;"><b>Inicial Real: {porcentaje_inicial:.2f}%</b></p>
+            </div>
+        """, unsafe_allow_html=True)
 
-# --- GRÁFICO DE BARRAS ---
-df_grafico = pd.DataFrame(escenarios)
-df_grafico['texto_barra'] = df_grafico['monto'].apply(lambda x: f"S/. {x:,.0f}")
-fig_bar = px.bar(df_grafico, x='nombre', y='monto', color='nombre', 
-                 color_discrete_map={esc['nombre']: esc['color'] for esc in escenarios},
-                 text='texto_barra')
-fig_bar.update_layout(
-    showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
-    font=dict(color="white"), xaxis_title=None, yaxis_title="Monto Total (S/)",
-    xaxis=dict(tickfont=dict(size=14)), yaxis=dict(tickfont=dict(size=14))
-)
-fig_bar.update_traces(textposition='inside', textfont_size=22, insidetextanchor='middle', marker_line_width=0)
-st.plotly_chart(fig_bar, use_container_width=True)
+# --- 3. VALIDACIÓN DE POLÍTICAS ---
+st.write("")
+st.subheader("🚀 Validación de Políticas e Inicial Mínima")
+v1, v2, v3 = st.columns(3)
 
-st.write("---")
-st.subheader("🚀 Estrategia y Optimización")
-o1, o2 = st.columns(2)
-with o1:
-    cuota_sim = int(max(0, (ingreso * 0.40) - ((linea_tc*0.5*0.05)+p_personal+p_vehicular+p_otros)))
-    inc = int((cuota_sim * factor) - prestamo)
-    if inc > 0: st.success(f"📈 **Oportunidad:** Bajando tus tarjetas al 50%, tu presupuesto de compra sube aproximadamente **S/ {inc:,}**.")
-    else: st.info("Tu nivel de deuda actual es óptimo para el sistema financiero.")
-with o2: 
+# Lógica de Validación
+es_apto_mivivienda = (inicial / escenarios[1]['monto']) >= 0.075 if escenarios[1]['monto'] > 0 else False
+es_apto_banco = (inicial / escenarios[1]['monto']) >= 0.10 if escenarios[1]['monto'] > 0 else False
+
+with v1:
+    if es_apto_mivivienda:
+        st.success(f"✅ **Fondo Mivivienda:** Su inicial de S/ {inicial:,} cumple con el 7.5% mínimo legal para acceder a bonos.")
+    else:
+        st.error(f"⚠️ **Fondo Mivivienda:** Su inicial es menor al 7.5% legal. Necesita ahorrar más para calificar.")
+
+with v2:
+    if es_apto_banco:
+        st.success("🏦 **Perfil Bancario:** Su inicial supera el 10%, lo que facilita la aprobación rápida del crédito.")
+    else:
+        st.warning("🏦 **Perfil Bancario:** Su inicial es menor al 10%. Quizás el banco pida más ahorro dependiendo de su perfil.")
+
+with v3:
     reserva = int((prestamo + inicial) * 0.03)
     st.warning(f"📜 **Reserva Administrativa Sugerida (3%):** Necesitarás **S/ {reserva:,}** para gastos de notaría, tasación y registrales.")
+
+st.write("---")
+st.subheader("💡 Estrategia de Optimización")
+cuota_sim = int(max(0, (ingreso * 0.40) - ((linea_tc*0.5*0.05)+p_personal+p_vehicular+p_otros)))
+inc = int((cuota_sim * factor) - prestamo)
+if inc > 0:
+    st.success(f"📈 **Oportunidad:** Bajando tus tarjetas al 50%, tu presupuesto de compra sube aproximadamente **S/ {inc:,}**.")
+else:
+    st.info("Tu nivel de deuda actual es óptimo para el sistema financiero.")
 
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
