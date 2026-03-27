@@ -29,16 +29,14 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNCIÓN PDF DE MARCA ---
+# --- FUNCIÓN PDF ---
 def generar_pdf(datos_informe, escenarios):
     pdf = FPDF()
     pdf.add_page()
-    # Recuadro de Título
     pdf.set_draw_color(14, 38, 71); pdf.set_line_width(0.8); pdf.rect(10, 10, 190, 25)
     pdf.set_y(15); pdf.set_font("Arial", 'B', 16); pdf.set_text_color(14, 38, 71)
     pdf.cell(0, 10, "AUDITORIA FINANCIERA INMOBILIARIA", ln=True, align='C')
     pdf.ln(20)
-    # Cuerpo
     pdf.set_fill_color(14, 38, 71); pdf.set_text_color(255, 255, 255); pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, " 1. DIAGNOSTICO FINANCIERO", ln=True, fill=True)
     pdf.ln(2); pdf.set_text_color(30, 30, 30); pdf.set_font("Arial", '', 11)
@@ -49,12 +47,9 @@ def generar_pdf(datos_informe, escenarios):
         pdf.set_font("Arial", 'B', 10); pdf.cell(70, 10, f" {esc['nombre']}", "B")
         pdf.cell(60, 10, f" S/ {esc['monto']:,}", "B", 0, 'C')
         pdf.cell(60, 10, f" {esc['desc']}", "B", 1, 'C')
-    pdf.ln(10); pdf.set_font("Arial", '', 9); pdf.write(5, "Este documento es una ")
-    pdf.set_font("Arial", 'B', 9); pdf.write(5, "proyeccion técnica referencial"); pdf.set_font("Arial", '', 9)
-    pdf.write(5, " basada en politicas bancarias generales.\nDatos de Bonos MiVivienda actualizados a 2026.")
     return pdf.output(dest='S').encode('latin-1')
 
-# --- PANEL LATERAL (INPUTS) ---
+# --- PANEL LATERAL ---
 with st.sidebar:
     st.title("📊 Datos de Asesoría")
     with st.expander("💰 Ingresos y Capital", expanded=True):
@@ -73,7 +68,7 @@ with st.sidebar:
         p_vehicular = st.number_input("Cuota Préstamo Vehicular (S/)", value=0)
         p_otros = st.number_input("Otros Créditos (S/)", value=0)
     
-    with st.expander("🏦 Condiciones Hipotecarias", expanded=False):
+    with st.expander("🏦 Condiciones", expanded=False):
         tea = st.number_input("TEA (%)", value=9.5); plazo = st.number_input("Años", value=20)
 
     with st.expander("🎁 Bonos MiVivienda (2026)", expanded=True):
@@ -93,10 +88,11 @@ factor = (1 - (1 + tem)**-(plazo * 12)) / tem if tem > 0 else 0
 prestamo = int(cuota_disp * factor)
 inicial = ahorros + disponible_afp
 
+# Escenarios ordenados para tarjetas y gráfico
 escenarios = [
-    {"nombre": "ECO-SOSTENIBLE", "monto": prestamo + inicial + m_verde, "clase": "verde", "desc": f"Bono: S/ {m_verde:,}"},
-    {"nombre": "TRADICIONAL", "monto": prestamo + inicial + m_bbp, "clase": "azul", "desc": f"Bono: S/ {m_bbp:,}"},
-    {"nombre": "SIN BONOS", "monto": prestamo + inicial, "clase": "gris", "desc": "Solo Rec. Propios"}
+    {"nombre": "ECO-SOSTENIBLE", "monto": prestamo + inicial + m_verde, "clase": "verde", "desc": f"Bono: S/ {m_verde:,}", "color": "#28a745"},
+    {"nombre": "MI VIVIENDA TRADICIONAL", "monto": prestamo + inicial + m_bbp, "clase": "azul", "desc": f"Bono: S/ {m_bbp:,}", "color": "#0e2647"},
+    {"nombre": "SIN BONOS", "monto": prestamo + inicial, "clase": "gris", "desc": "Solo Rec. Propios", "color": "#6c757d"}
 ]
 
 # --- UI CUERPO ---
@@ -105,9 +101,8 @@ st.write("---")
 st.subheader("1. Salud Crediticia y Diagnóstico")
 
 col_gauge, col_metrics = st.columns([1.2, 2])
-
 with col_gauge:
-    fig = go.Figure(go.Indicator(mode="gauge+number", value=pct_deuda, title={'text': "Carga de Deuda Actual", 'font': {'size': 20, 'color': 'white'}},
+    fig = go.Figure(go.Indicator(mode="gauge+number", value=pct_deuda, title={'text': "Carga de Deuda Actual"},
         number={'suffix': "%", 'font':{'color':'white'}},
         gauge={'axis': {'range': [None, 50]}, 'bar': {'color': "white"},
                'steps': [{'range': [0, 20], 'color': "#28a745"}, {'range': [20, 35], 'color': "#ffc107"}, {'range': [35, 50], 'color': "#dc3545"}]}))
@@ -117,19 +112,11 @@ with col_gauge:
         st.markdown("<small>0-20%: Perfil Prime | 21-35%: Riesgo Medio | 36-40%: Límite Crítico</small>", unsafe_allow_html=True)
 
 with col_metrics:
-    # FILA 1: Alineación Horizontal de Cuota y Préstamo
-    met_col1, met_col2 = st.columns(2)
-    with met_col1:
-        st.metric("Cuota Disponible Real", f"S/ {cuota_disp:,}")
-    with met_col2:
-        st.metric("Préstamo Hipotecario", f"S/ {prestamo:,}")
-    
-    st.write("") # Espaciador vertical
-    
-    # FILA 2: Inicial Total
+    met_c1, met_c2 = st.columns(2)
+    met_c1.metric("Cuota Disponible Real", f"S/ {cuota_disp:,}")
+    met_c2.metric("Préstamo Hipotecario", f"S/ {prestamo:,}")
+    st.write("")
     st.metric("Inicial Total (Ahorros + AFP)", f"S/ {inicial:,}")
-    
-    # FILA 3: Dato Bancario
     st.info("💡 **Dato Bancario:** Los bancos suelen limitar el total de tus deudas mensuales al 40% de tus ingresos netos.")
 
 st.write("---")
@@ -139,24 +126,26 @@ for i, col in enumerate([e1, e2, e3]):
     with col:
         st.markdown(f'<div class="resultado-card {escenarios[i]["clase"]}"><h3>{escenarios[i]["nombre"]}</h3><h1>S/ {escenarios[i]["monto"]:,}</h1><p>{escenarios[i]["desc"]}</p></div>', unsafe_allow_html=True)
 
-# SECCIÓN ESTRATEGIA RECONSTRUIDA
+# --- GRÁFICO DE BARRAS (Ordenado) ---
+df_grafico = pd.DataFrame(escenarios)
+fig_bar = px.bar(df_grafico, x='nombre', y='monto', color='nombre', 
+                 color_discrete_map={esc['nombre']: esc['color'] for esc in escenarios},
+                 text_auto='.s')
+fig_bar.update_layout(showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
+                      font=dict(color="white"), xaxis_title=None, yaxis_title="Monto Total (S/)")
+st.plotly_chart(fig_bar, use_container_width=True)
+
 st.write("---")
 st.subheader("🚀 Estrategia y Optimización")
 o1, o2 = st.columns(2)
 with o1:
     cuota_sim = int(max(0, (ingreso * 0.40) - ((linea_tc*0.5*0.05)+p_personal+p_vehicular+p_otros)))
-    incremento = int((cuota_sim * factor) - prestamo)
-    if incremento > 0:
-        st.success(f"📈 **Oportunidad:** Bajando tus tarjetas al 50%, tu presupuesto de compra sube aproximadamente **S/ {incremento:,}**.")
-    else:
-        st.info("Tu nivel de deuda actual es óptimo para el sistema financiero.")
-with o2:
-    reserva = int((prestamo + inicial) * 0.03)
-    st.warning(f"📜 **Reserva Administrativa Sugerida (3%):** S/ {reserva:,} para gastos de alcabala, tasación y notariales.")
+    inc = int((cuota_sim * factor) - prestamo)
+    if inc > 0: st.success(f"📈 **Oportunidad:** Bajando tarjetas al 50%, tu presupuesto sube **S/ {inc:,}**.")
+    else: st.info("Deuda saludable.")
+with o2: st.warning(f"📜 **Reserva Administrativa (3%):** S/ {int((prestamo+inicial)*0.03):,}")
 
-# BOTÓN FINAL
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
-    resumen = {"Ingreso Mensual": f"S/ {ingreso:,}", "Carga Deuda": f"{pct_deuda:.2f}%", "Capacidad Cuota": f"S/ {cuota_disp:,}"}
-    pdf_out = generar_pdf(resumen, escenarios)
-    st.download_button("📥 Descargar Reporte PDF de Marca", data=pdf_out, file_name=f"Auditoria_{datetime.now().strftime('%Y%m%d')}.pdf")
+    pdf = generar_pdf({"Ingreso": f"S/ {ingreso:,}", "Deuda": f"{pct_deuda:.2f}%", "Cuota": f"S/ {cuota_disp:,}"}, escenarios)
+    st.download_button("📥 Descargar Reporte PDF", data=pdf, file_name="Reporte_Inversion.pdf")
