@@ -52,15 +52,17 @@ def generar_pdf(datos_informe, escenarios):
 # --- PANEL LATERAL ---
 with st.sidebar:
     st.title("📊 Datos de Asesoría")
+    
     with st.expander("💰 Ingresos y Capital", expanded=True):
         ingreso = st.number_input("Ingreso Neto Mensual (S/)", min_value=0, value=6000)
         ahorros = st.number_input("Ahorros Líquidos (S/)", min_value=0, value=15000)
         saldo_afp = st.number_input("Saldo Total en AFP (S/)", min_value=0, value=40000)
         disponible_afp = int(saldo_afp * 0.25)
-        st.success(f"✅ Disponible para inicial (25% AFP): S/ {disponible_afp:,}")
+        # CORRECCIÓN 1: Formato Caption para AFP
+        st.caption(f"✅ Disponible para inicial (25% AFP): S/ {disponible_afp:,}")
 
     with st.expander("💳 Subgrupo 1: Tarjetas", expanded=True):
-        linea_tc = st.number_input("Línea de crédito total (S/.)", value=10000, help="La SBS considera el 5% de esta línea como deuda mensual.")
+        linea_tc = st.number_input("Línea de crédito total (S/.)", value=10000)
         cuota_tc_sbs = int(linea_tc * 0.05)
         st.caption(f"Carga financiera estimada (5% SBS): S/ {cuota_tc_sbs:,}")
 
@@ -81,7 +83,8 @@ with st.sidebar:
             "R5": {"b": 0, "v": 0, "rango": "Más de S/ 355,100 (Sin Bono)"}
         }
         sel = st.selectbox("Seleccione Rango de Vivienda", list(datos_bonos.keys()), index=3)
-        st.info(f"🏷️ **Precio Vivienda:** {datos_bonos[sel]['rango']}")
+        # CORRECCIÓN 2: Formato Caption para Rango de Precio
+        st.caption(f"🏷️ Precio Vivienda: {datos_bonos[sel]['rango']}")
         
         integrador = st.checkbox("¿Bono Integrador? (+3,600)")
         extra = 3600 if integrador else 0
