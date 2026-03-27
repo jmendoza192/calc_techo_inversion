@@ -26,6 +26,9 @@ st.markdown("""
     .verde { background: linear-gradient(135deg, #28a745, #1e7e34); }
     .azul { background: linear-gradient(135deg, #0e2647, #1b3a61); }
     .gris { background: linear-gradient(135deg, #6c757d, #495057); }
+    .opt-card {
+        background-color: #1e3a8a; padding: 20px; border-radius: 10px; border: 1px solid #3b82f6; height: 100%;
+    }
     #MainMenu, footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
@@ -100,9 +103,9 @@ prestamo = int(cuota_disp * factor)
 inicial = ahorros + disponible_afp
 
 escenarios = [
-    {"nombre": "ECO-SOSTENIBLE", "monto": prestamo + inicial + m_verde, "clase": "verde", "desc": f"Bono: S/ {m_verde:,}", "color": "#28a745"},
-    {"nombre": "TRADICIONAL", "monto": prestamo + inicial + m_bbp, "clase": "azul", "desc": f"Bono: S/ {m_bbp:,}", "color": "#0e2647"},
-    {"nombre": "SIN BONOS", "monto": prestamo + inicial, "clase": "gris", "desc": "Solo Rec. Propios", "color": "#6c757d"}
+    {"nombre": "ECO-SOSTENIBLE", "monto": prestamo + inicial + m_verde, "clase": "verde", "desc": f"Bono: S/ {m_verde:,}"},
+    {"nombre": "TRADICIONAL", "monto": prestamo + inicial + m_bbp, "clase": "azul", "desc": f"Bono: S/ {m_bbp:,}"},
+    {"nombre": "SIN BONOS", "monto": prestamo + inicial, "clase": "gris", "desc": "Solo Rec. Propios"}
 ]
 
 # --- UI CUERPO ---
@@ -150,36 +153,52 @@ st.write("")
 st.subheader("🚀 Validación de Políticas e Inicial Mínima")
 v1, v2, v3 = st.columns(3)
 
-# Lógica de Validación
-es_apto_mivivienda = (inicial / escenarios[1]['monto']) >= 0.075 if escenarios[1]['monto'] > 0 else False
-es_apto_banco = (inicial / escenarios[1]['monto']) >= 0.10 if escenarios[1]['monto'] > 0 else False
+# Lógica de Validación (Referencia: Escenario Tradicional)
+porcentaje_ref = (inicial / escenarios[1]['monto']) if escenarios[1]['monto'] > 0 else 0
 
 with v1:
-    if es_apto_mivivienda:
+    if porcentaje_ref >= 0.075:
         st.success(f"✅ **Fondo Mivivienda:** Su inicial de S/ {inicial:,} cumple con el 7.5% mínimo legal para acceder a bonos.")
     else:
-        st.error(f"⚠️ **Fondo Mivivienda:** Su inicial es menor al 7.5% legal. Necesita ahorrar más para calificar.")
+        st.error(f"⚠️ **Fondo Mivivienda:** Su inicial ({porcentaje_ref*100:.1f}%) es menor al 7.5% legal. Necesita ahorrar más.")
 
 with v2:
-    if es_apto_banco:
-        st.success("🏦 **Perfil Bancario:** Su inicial supera el 10%, lo que facilita la aprobación rápida del crédito.")
+    if porcentaje_ref >= 0.10:
+        st.success("🏦 **Perfil Bancario:** Su inicial supera el 10%, lo que facilita la aprobación comercial del crédito.")
     else:
-        st.warning("🏦 **Perfil Bancario:** Su inicial es menor al 10%. Quizás el banco pida más ahorro dependiendo de su perfil.")
+        st.warning(f"🏦 **Perfil Bancario:** Su inicial es de {porcentaje_ref*100:.1f}%. Quizás el banco pida más para llegar al 10% mínimo.")
 
 with v3:
     reserva = int((prestamo + inicial) * 0.03)
     st.warning(f"📜 **Reserva Administrativa Sugerida (3%):** Necesitarás **S/ {reserva:,}** para gastos de notaría, tasación y registrales.")
 
 st.write("---")
-st.subheader("💡 Estrategia de Optimización")
-cuota_sim = int(max(0, (ingreso * 0.40) - ((linea_tc*0.5*0.05)+p_personal+p_vehicular+p_otros)))
-inc = int((cuota_sim * factor) - prestamo)
-if inc > 0:
-    st.success(f"📈 **Oportunidad:** Bajando tus tarjetas al 50%, tu presupuesto de compra sube aproximadamente **S/ {inc:,}**.")
-else:
-    st.info("Tu nivel de deuda actual es óptimo para el sistema financiero.")
+st.subheader("💡 Estrategias de Optimización")
+opt1, opt2 = st.columns(2)
 
+with opt1:
+    cuota_sim_deuda = int(max(0, (ingreso * 0.40) - ((linea_tc*0.5*0.05)+p_personal+p_vehicular+p_otros)))
+    inc_deuda = int((cuota_sim_deuda * factor) - prestamo)
+    if inc_deuda > 0:
+        st.success(f"📈 **Por Deuda:** Bajando tus tarjetas al 50%, tu presupuesto de compra sube aproximadamente **S/ {inc_deuda:,}**.")
+    else:
+        st.info("✅ Tu nivel de deuda actual es óptimo para el sistema financiero.")
+
+with opt2:
+    ingreso_proy = ingreso + 500
+    cuota_proy = int(max(0, (ingreso_proy * 0.40) - deudas))
+    prestamo_proy = int(cuota_proy * factor)
+    inc_ingreso = prestamo_proy - prestamo
+    st.markdown(f"""
+        <div class="opt-card">
+            <h4 style="margin-top:0; color: #60a5fa;">🚀 Proyección por Ingresos</h4>
+            <p style="font-size: 0.9rem; color: #d1d5db;">Si tus ingresos aumentan en <b>S/ 500</b>, tu techo de inversión sube:</p>
+            <h2 style="color: white; margin-bottom: 0;">+ S/ {inc_ingreso:,}</h2>
+        </div>
+    """, unsafe_allow_html=True)
+
+st.write("")
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
     pdf = generar_pdf({"Ingreso": f"S/ {ingreso:,}", "Deuda": f"{pct_deuda:.2f}%", "Cuota": f"S/ {cuota_disp:,}"}, escenarios)
-    st.download_button("📥 Descargar Reporte PDF de Marca", data=pdf, file_name="Reporte_Inversion.pdf")
+    st.download_button("📥 Descargar Reporte PDF", data=pdf, file_name="Reporte_Inversion.pdf")
