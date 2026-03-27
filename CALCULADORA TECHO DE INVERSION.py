@@ -104,16 +104,16 @@ esc_directo = int(prestamo_max + inicial_total)
 
 escenarios_data = [
     {"nombre": "ECO-SOSTENIBLE", "monto": esc_verde, "clase": "verde", "color_hex": "#28a745", "desc": f"Bonos: S/ {monto_bbp_verde:,}"},
-    {"nombre": "TRADICIONAL", "monto": esc_tradicional, "clase": "azul", "color_hex": "#007bff", "desc": f"Bono: S/ {monto_bbp:,}"},
+    {"nombre": "MIVIVIENDA TRADICIONAL", "monto": esc_tradicional, "clase": "azul", "color_hex": "#007bff", "desc": f"Bono: S/ {monto_bbp:,}"},
     {"nombre": "SIN BONOS", "monto": esc_directo, "clase": "gris", "color_hex": "#6c757d", "desc": "Solo Recursos Propios"}
 ]
 
 # --- CUERPO PRINCIPAL ---
 st.title("🎯 Auditoría financiera - Inversión")
-st.write(f"Análisis detallado de capacidad crediticia bajo parámetros SBS.")
+st.write(f"Diagnóstico técnico bajo normativa SBS y MiVivienda 2026.")
 st.write("---")
 
-# FASE 1: Salud Crediticia
+# FASE 1: Semáforo y Métricas
 st.subheader("1. Salud Crediticia y Diagnóstico")
 col_gauge, col_mets = st.columns([1.2, 2])
 
@@ -139,21 +139,21 @@ with col_gauge:
     fig_gauge.update_layout(height=280, margin=dict(l=30, r=30, t=50, b=10))
     st.plotly_chart(fig_gauge, use_container_width=True)
     
-    # GUÍA DE EVALUACIÓN BANCARIA (Formato Desplegable Unificado)
+    # GUÍA DE EVALUACIÓN BANCARIA (Fuente Blanca)
     with st.expander("📋 Guía de Evaluación Bancaria", expanded=False):
         st.markdown("""
         <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
             <tr style="border-bottom: 1px solid #f5f5f5;">
                 <td style="color: #28a745; font-weight: bold; padding: 8px 0;">0% - 20%</td>
-                <td style="color: #444; padding: 8px 0;"><b>Perfil Prime:</b> Calificación inmediata y mejor tasa.</td>
+                <td style="color: #ffffff; padding: 8px 0;"><b>Perfil Prime:</b> Calificación inmediata y mejor tasa.</td>
             </tr>
             <tr style="border-bottom: 1px solid #f5f5f5;">
                 <td style="color: #ffb100; font-weight: bold; padding: 8px 0;">21% - 35%</td>
-                <td style="color: #444; padding: 8px 0;"><b>Riesgo Medio:</b> Aprobación sujeta a sustento técnico.</td>
+                <td style="color: #ffffff; padding: 8px 0;"><b>Riesgo Medio:</b> Aprobación sujeta a sustento técnico.</td>
             </tr>
             <tr>
                 <td style="color: #dc3545; font-weight: bold; padding: 8px 0;">36% - 40%</td>
-                <td style="color: #444; padding: 8px 0;"><b>Límite Crítico:</b> Requiere liberar carga financiera.</td>
+                <td style="color: #ffffff; padding: 8px 0;"><b>Límite Crítico:</b> Requiere liberar carga financiera.</td>
             </tr>
         </table>
         """, unsafe_allow_html=True)
@@ -162,11 +162,11 @@ with col_mets:
     st.write("")
     m1, m2 = st.columns(2)
     m1.metric("Cuota Disponible Bruta", f"S/ {cuota_disponible:,}")
-    m2.metric("Préstamo Hipotecario Est.", f"S/ {prestamo_max:,}")
+    m2.metric("Préstamo Hipotecario Estimado", f"S/ {prestamo_max:,}")
     st.write("---")
     st.metric("Inicial Total (Ahorros + AFP)", f"S/ {inicial_total:,}")
     st.write("---")
-    st.info("💡 **Criterio Bancario:** Los bancos limitan tu endeudamiento total al 40% de tu ingreso neto para mitigar riesgos de impago.")
+    st.info("💡 **Criterio Bancario:** El banco evalúa tu capacidad basándose en que el total de tus cuotas no supere el 40% de tu sueldo neto.")
 
 # FASE 2: Escenarios
 st.write("---")
@@ -181,7 +181,7 @@ for i, esc in enumerate(escenarios_data):
 st.write("---")
 df_grafico = pd.DataFrame(escenarios_data)
 fig_bar = px.bar(df_grafico, x='nombre', y='monto', color='nombre',
-             color_discrete_map={"ECO-SOSTENIBLE": "#28a745", "TRADICIONAL": "#007bff", "SIN BONOS": "#6c757d"},
+             color_discrete_map={"ECO-SOSTENIBLE": "#28a745", "MIVIVIENDA TRADICIONAL": "#007bff", "SIN BONOS": "#6c757d"},
              text_auto=True)
 fig_bar.update_layout(showlegend=False, plot_bgcolor='rgba(0,0,0,0)', yaxis_title="S/ Totales", xaxis_title=None)
 fig_bar.update_traces(texttemplate='S/ %{y:,.0f}', textposition='outside')
@@ -191,9 +191,9 @@ st.plotly_chart(fig_bar, use_container_width=True)
 st.write("---")
 st.subheader("🚀 Estrategia de Poder de Compra")
 if incremento_prestamo > 0:
-    st.success(f"📈 **Acción Recomendada:** Al reducir tu línea de tarjeta a la mitad (S/ {int(linea_tc*0.5):,}), tu capacidad de compra se expande en **S/ {incremento_prestamo:,}**.")
+    st.success(f"📈 **Oportunidad Detectada:** Al reducir tu línea de tarjeta a la mitad (S/ {int(linea_tc*0.5):,}), tu presupuesto de compra sube en **S/ {incremento_prestamo:,}**.")
 else:
-    st.info("Tu estructura de deuda actual permite una calificación hipotecaria fluida.")
+    st.info("Tu nivel de deuda es saludable para el proceso hipotecario.")
 
 # FASE 5: Optimización Final
 st.write("---")
@@ -201,14 +201,10 @@ o1, o2 = st.columns(2)
 with o1:
     with st.expander("📉 Análisis de Deudas Mensuales", expanded=True):
         st.write(f"Carga financiera mensual actual: **S/ {deudas_totales:,}**.")
-        if pct_endeudamiento > 35:
-            st.warning("Se recomienda reducir cuotas fijas para mejorar el perfil de riesgo ante el banco.")
-
 with o2:
-    with st.expander("📜 Reserva para Gastos de Cierre", expanded=True):
+    with st.expander("📜 Reserva para Gastos Administrativos", expanded=True):
         gasto_est = int(esc_tradicional * 0.03)
         st.write(f"Gastos notariales y registrales estimados (3%): **S/ {gasto_est:,}**")
 
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
-    st.success("Diagnóstico financiero completado con éxito.")
