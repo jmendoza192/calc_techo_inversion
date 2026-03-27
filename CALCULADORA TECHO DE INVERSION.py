@@ -49,7 +49,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. FUNCIÓN DE EXPORTACIÓN PDF PROFESIONAL (SIN CAMBIOS) ---
+# --- 2. FUNCIÓN DE EXPORTACIÓN PDF PROFESIONAL (SIN CAMBIOS ESTRUCTURALES) ---
 def generar_pdf(datos_informe, escenarios, seleccion_bono):
     pdf = FPDF()
     pdf.add_page()
@@ -134,7 +134,7 @@ inicial = ahorros + disponible_afp
 
 escenarios = [
     {"nombre": "ECO-SOSTENIBLE", "monto": prestamo + inicial + m_verde, "clase": "verde", "desc": f"Bono: S/ {m_verde:,}"},
-    {"nombre": "TRADICIONAL", "monto": prestamo + inicial + m_bbp, "clase": "azul", "desc": f"Bono: S/ {m_bbp:,}"},
+    {"nombre": "MI VIVIENDA TRADICIONAL", "monto": prestamo + inicial + m_bbp, "clase": "azul", "desc": f"Bono: S/ {m_bbp:,}"},
     {"nombre": "SIN BONOS", "monto": prestamo + inicial, "clase": "gris", "desc": "Solo Rec. Propios"}
 ]
 
@@ -152,7 +152,6 @@ with col_gauge:
     fig.update_layout(height=350, paper_bgcolor='rgba(0,0,0,0)', font={'color': "white"})
     st.plotly_chart(fig, use_container_width=True)
     
-    # LEYENDA DEL SEMÁFORO
     st.markdown("""
         <div style="background-color: #1f2630; padding: 10px; border-radius: 8px; border: 1px solid #30363d; font-size: 0.8rem;">
             <p style="margin-bottom: 5px;">🟢 <b>0% - 20%:</b> Excelente salud financiera.</p>
