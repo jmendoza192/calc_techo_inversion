@@ -99,20 +99,20 @@ esc_tradicional = int(prestamo_max + inicial_total + monto_bbp)
 esc_directo = int(prestamo_max + inicial_total)
 
 escenarios_data = [
-    {"nombre": "ECO-SOSTENIBLE", "monto": esc_verde, "clase": "verde", "color_hex": "#28a745", "desc": f"Bonos Incluidos: S/ {monto_bbp_verde:,}"},
-    {"nombre": "TRADICIONAL", "monto": esc_tradicional, "clase": "azul", "color_hex": "#007bff", "desc": f"Bono Incluido: S/ {monto_bbp:,}"},
+    {"nombre": "ECO-SOSTENIBLE", "monto": esc_verde, "clase": "verde", "color_hex": "#28a745", "desc": f"Bonos: S/ {monto_bbp_verde:,}"},
+    {"nombre": "TRADICIONAL", "monto": esc_tradicional, "clase": "azul", "color_hex": "#007bff", "desc": f"Bono: S/ {monto_bbp:,}"},
     {"nombre": "SIN BONOS", "monto": esc_directo, "clase": "gris", "color_hex": "#6c757d", "desc": "Solo Recursos Propios"}
 ]
 
 # --- CUERPO PRINCIPAL ---
 st.title("🎯 Auditoría financiera - Inversión")
-st.write(f"Análisis detallado de capacidad crediticia bajo parámetros SBS.")
+st.write(f"Análisis detallado bajo parámetros SBS y MiVivienda 2026.")
 st.write("---")
 
 # FASE 1: Salud Crediticia
 st.subheader("1. Indicadores de Calificación")
 c_met1, c_met2, c_met3 = st.columns(3)
-c_met1.metric("Cuota Disponible Bruta", f"S/ {cuota_disponible:,}", help="Ingreso x 40% - Todas las deudas (incluyendo 5% TC)")
+c_met1.metric("Cuota Disponible Bruta", f"S/ {cuota_disponible:,}")
 c_met2.metric("Préstamo Hipotecario Est.", f"S/ {prestamo_max:,}")
 c_met3.metric("Inicial (Ahorros + AFP)", f"S/ {inicial_total:,}")
 
@@ -132,15 +132,24 @@ for i, esc in enumerate(escenarios_data):
             </div>
             """, unsafe_allow_html=True)
 
-# FASE 3: Gráfico
+# FASE 3: Gráfico Corregido
 st.write("---")
 st.subheader("3. Visualización Comparativa de Inversión")
 df_grafico = pd.DataFrame(escenarios_data)
+
 fig = px.bar(
-    df_grafico, x='nombre', y='monto', color='nombre',
-    color_discrete_map={d['nombre']: d['color_hex'] for d in scenarios_data if 'scenarios_data' in locals() else {d['nombre']: d['color_hex'] for d in escenarios_data}},
+    df_grafico, 
+    x='nombre', 
+    y='monto', 
+    color='nombre',
+    color_discrete_map={
+        "ECO-SOSTENIBLE": "#28a745",
+        "TRADICIONAL": "#007bff",
+        "SIN BONOS": "#6c757d"
+    },
     text_auto=True
 )
+
 fig.update_layout(showlegend=False, plot_bgcolor='rgba(0,0,0,0)', xaxis_title=None, yaxis_title="Monto (S/) Totales")
 fig.update_traces(textposition='outside', textfont_size=14, texttemplate='S/ %{y:,.0f}')
 st.plotly_chart(fig, use_container_width=True)
@@ -152,15 +161,14 @@ st.subheader("🚀 Rutas de Optimización para tu Compra")
 opt1, opt2 = st.columns(2)
 with opt1:
     with st.expander("📉 Estrategia de Tarjetas de Crédito", expanded=True):
-        st.write(f"Tu línea de S/ {linea_tc:,} consume S/ {cuota_tc_sbs:,} de tu capacidad mensual.")
-        st.write("**Recomendación:** Reducir líneas de crédito no utilizadas para liberar capacidad de préstamo inmediata.")
+        st.write(f"Tu línea de S/ {linea_tc:,} genera una cuota teórica de S/ {cuota_tc_sbs:,}.")
+        st.write("**Impacto:** El banco asume este gasto fijo incluso si la tarjeta está en S/ 0 de deuda.")
 
 with opt2:
     with st.expander("📜 Gestión de Gastos de Cierre", expanded=True):
-        st.write(f"Gasto estimado de cierre (3%): S/ {int(esc_tradicional * 0.03):,}")
-        st.write("Este monto debe reservarse para trámites notariales y registrales.")
+        st.write(f"Reserva para gastos (3%): S/ {int(esc_tradicional * 0.03):,}")
 
 st.write("---")
 if st.button("✅ Finalizar Auditoría"):
     st.balloons()
-    st.success("Cálculo bajo normativa SBS completado.")
+    st.success("Auditoría completada.")
