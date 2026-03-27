@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS UI
+# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS
 st.set_page_config(page_title="Auditoría Financiera | Jancarlo Inmobiliario", layout="wide")
 
 st.markdown("""
@@ -84,21 +84,17 @@ pct_endeudamiento = (deudas_totales / ingreso * 100) if ingreso > 0 else 0
 capacidad_40 = ingreso * 0.40
 cuota_disponible = int(max(0, capacidad_40 - deudas_totales))
 
-# Cálculo Financiero de Préstamo
 tem = (1 + tea/100)**(1/12) - 1
 n_meses = plazo_anios * 12
 factor = (1 - (1 + tem)**-n_meses) / tem if tem > 0 else 0
 prestamo_max = int(cuota_disponible * factor)
 
-# LÓGICA DE SIMULACIÓN (Reducir TC al 50%)
-cuota_tc_reducida = int((linea_tc * 0.5) * 0.05)
-cuota_disponible_sim = int(max(0, capacidad_40 - (cuota_tc_reducida + p_personal + p_vehicular + p_otros)))
-prestamo_max_simulado = int(cuota_disponible_sim * factor)
+cuota_tc_sim = int((linea_tc * 0.5) * 0.05)
+cuota_disp_sim = int(max(0, capacidad_40 - (cuota_tc_sim + p_personal + p_vehicular + p_otros)))
+prestamo_max_simulado = int(cuota_disp_sim * factor)
 incremento_prestamo = prestamo_max_simulado - prestamo_max
-
 inicial_total = ahorros + disponible_afp
 
-# Escenarios
 esc_verde = int(prestamo_max + inicial_total + monto_bbp_verde)
 esc_tradicional = int(prestamo_max + inicial_total + monto_bbp)
 esc_directo = int(prestamo_max + inicial_total)
@@ -116,14 +112,15 @@ st.write("---")
 
 # FASE 1: Semáforo y Métricas
 st.subheader("1. Salud Crediticia y Diagnóstico")
-col_gauge, col_mets = st.columns([1, 2])
+col_gauge, col_mets = st.columns([1.2, 2])
 
 with col_gauge:
+    # GRÁFICO DEL SEMÁFORO
     fig_gauge = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = pct_endeudamiento,
-        number = {'suffix': "%", 'font': {'size': 24}},
-        title = {'text': "Carga de Deuda actual", 'font': {'size': 18}},
+        number = {'suffix': "%", 'font': {'size': 26}},
+        title = {'text': "Carga de Deuda Actual", 'font': {'size': 18}},
         gauge = {
             'axis': {'range': [None, 50], 'tickwidth': 1},
             'bar': {'color': "#1e1e1e"},
@@ -136,16 +133,39 @@ with col_gauge:
                 'thickness': 0.75,
                 'value': 40}
         }))
-    fig_gauge.update_layout(height=250, margin=dict(l=20, r=20, t=50, b=20))
+    fig_gauge.update_layout(height=280, margin=dict(l=30, r=30, t=50, b=10))
     st.plotly_chart(fig_gauge, use_container_width=True)
+    
+    # GUÍA TÉCNICA (DEBAJO DEL SEMÁFORO)
+    st.markdown("""
+    <div style="background-color: #ffffff; padding: 18px; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <p style="font-size: 1rem; font-weight: bold; margin-bottom: 12px; color: #1e1e1e; border-bottom: 2px solid #f0f0f0; padding-bottom: 5px;">📊 Escala de Evaluación Bancaria</p>
+        <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #f5f5f5;">
+                <td style="color: #28a745; font-weight: bold; padding: 8px 0; width: 35%;">0% - 20%</td>
+                <td style="color: #444; padding: 8px 0;"><b>Perfil Prime:</b> Calificación rápida y acceso a mejores tasas.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f5f5f5;">
+                <td style="color: #ffb100; font-weight: bold; padding: 8px 0;">21% - 35%</td>
+                <td style="color: #444; padding: 8px 0;"><b>Riesgo Medio:</b> Aprobación condicionada a sustento de ingresos.</td>
+            </tr>
+            <tr>
+                <td style="color: #dc3545; font-weight: bold; padding: 8px 0;">36% - 40%</td>
+                <td style="color: #444; padding: 8px 0;"><b>Límite Crítico:</b> Requiere liquidar deudas para calificar.</td>
+            </tr>
+        </table>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col_mets:
     st.write("")
     m1, m2 = st.columns(2)
-    m1.metric("Cuota Disponible Real", f"S/ {cuota_disponible:,}")
-    m2.metric("Préstamo Hipotecario", f"S/ {prestamo_max:,}")
+    m1.metric("Cuota Disponible Bruta", f"S/ {cuota_disponible:,}")
+    m2.metric("Préstamo Hipotecario Est.", f"S/ {prestamo_max:,}")
     st.write("---")
     st.metric("Inicial Total (Ahorros + AFP)", f"S/ {inicial_total:,}")
+    st.write("---")
+    st.info("💡 **Dato Bancario:** El banco evalúa tu capacidad basándose en que el total de tus cuotas (incluyendo la nueva hipoteca) no supere el 40% de tu sueldo neto.")
 
 # FASE 2: Escenarios
 st.write("---")
@@ -166,29 +186,23 @@ fig_bar.update_layout(showlegend=False, plot_bgcolor='rgba(0,0,0,0)', yaxis_titl
 fig_bar.update_traces(texttemplate='S/ %{y:,.0f}', textposition='outside')
 st.plotly_chart(fig_bar, use_container_width=True)
 
-# FASE 4: Estrategia de Mejora (TU IDEA)
+# FASE 4: Estrategia de Mejora
 st.write("---")
-st.subheader("🚀 Estrategia de Poder de Compra (Jancarlo Inmobiliario)")
+st.subheader("🚀 Estrategia de Poder de Compra")
 if incremento_prestamo > 0:
-    st.info(f"💡 **Oportunidad de Mejora:** Si reducimos tu línea de tarjeta a la mitad (S/ {int(linea_tc*0.5):,}), tu préstamo bancario subiría de S/ {prestamo_max:,} a **S/ {prestamo_max_simulado:,}**.")
-    st.success(f"📈 **Ganancia neta en presupuesto:** + S/ {incremento_prestamo:,}")
+    st.success(f"📈 **Oportunidad Detectada:** Si reduces tu línea de tarjeta a la mitad (S/ {int(linea_tc*0.5):,}), tu presupuesto de compra sube en **S/ {incremento_prestamo:,}**.")
 else:
-    st.write("Tu nivel de deuda actual es óptimo para calificar.")
+    st.info("Tu nivel de deuda es saludable para el proceso hipotecario.")
 
 # FASE 5: Optimización Final
 st.write("---")
 o1, o2 = st.columns(2)
 with o1:
-    with st.expander("📉 Plan de Cierre de Deudas", expanded=True):
-        st.write(f"Tu carga mensual de deudas es de **S/ {deudas_totales:,}**.")
-        if pct_endeudamiento > 35:
-            st.error("Prioridad: Liquidar préstamos personales antes de la evaluación hipotecaria.")
+    with st.expander("📉 Análisis de Deudas", expanded=True):
+        st.write(f"Carga mensual actual: **S/ {deudas_totales:,}**.")
 with o2:
     with st.expander("📜 Reserva para Gastos Administrativos", expanded=True):
-        gasto_cierre = int(esc_tradicional * 0.03)
-        st.write(f"Estimado de gastos (3%): **S/ {gasto_cierre:,}**")
-        st.caption("Notaría, registros y tasación.")
+        st.write(f"Reserva estimada (3%): **S/ {int(esc_tradicional * 0.03):,}**")
 
-if st.button("✅ Generar Diagnóstico"):
+if st.button("✅ Finalizar"):
     st.balloons()
-    st.success("Auditoría Finalizada con éxito.")
